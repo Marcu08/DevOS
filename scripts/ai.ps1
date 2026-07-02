@@ -1,13 +1,12 @@
-Write-Host "[AI] Starting DevOS AI layer..."
+Write-Host "[AI v0.6] Starting full loop..."
 
-$task = "improve current project"
-$cwd = Get-Location
+powershell -ExecutionPolicy Bypass -File C:\DevOs\scripts\context.ps1
+
+node C:\DevOs\agent\agent.js "improve current project"
 
 Start-Process powershell -ArgumentList @(
-  "-ExecutionPolicy", "Bypass",
   "-Command",
-  "node C:\Users\marzu\DevOs\agent\agent.js `"$task`" `"$cwd`""
+  "opencode < C:\DevOs\logs\prompt.txt"
 )
 
-Write-Host "[AI] Agent launched"
-exit
+Write-Host "[AI v0.6] Loop completed"

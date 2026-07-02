@@ -8,7 +8,7 @@ function run(cmd) {
   return execSync(cmd, { encoding: "utf-8", cwd });
 }
 
-// 1. repo state
+// git state
 let status = "";
 let diff = "";
 
@@ -20,26 +20,37 @@ try {
   diff = "";
 }
 
-// 2. context object
+// CONTEXT
 const context = {
   task,
   cwd,
   status,
   diff,
-  timestamp: new Date().toISOString()
+  time: new Date().toISOString()
 };
 
-fs.writeFileSync(
-  "logs_diff.json",
-  JSON.stringify({ diff }, null, 2)
-);
+// SAVE CONTEXT
+fs.mkdirSync("logs", { recursive: true });
 
 fs.writeFileSync(
-  "logs_context.json",
+  "logs/context.json",
   JSON.stringify(context, null, 2)
 );
 
-// 3. AI prompt builder (OpenCode-ready)
+// PROPOSAL LAYER (NEW)
+const proposal = {
+  goal: task,
+  summary: "AI analysis pending execution",
+  changes: [],
+  risk: "unknown"
+};
+
+fs.writeFileSync(
+  "logs/proposal.json",
+  JSON.stringify(proposal, null, 2)
+);
+
+// PROMPT BUILDER
 const prompt = `
 TASK:
 ${task}
@@ -50,13 +61,14 @@ ${status}
 GIT DIFF:
 ${diff}
 
-INSTRUCTIONS:
-- analyze codebase
-- propose improvements
-- if safe, suggest patch format
+RULES:
+- propose changes only
+- do not apply automatically
+- format as structured suggestions
 `;
 
-fs.writeFileSync("logs_prompt.txt", prompt);
+fs.writeFileSync("logs/prompt.txt", prompt);
 
-console.log("[AGENT] Context built");
-console.log("[AGENT] Ready for AI execution");
+console.log("[AGENT v0.6] Context built");
+console.log("[AGENT v0.6] Proposal generated");
+console.log("[AGENT v0.6] Ready for AI review");

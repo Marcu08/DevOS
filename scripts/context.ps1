@@ -1,15 +1,24 @@
-Write-Host "[CTX] Building project context..."
+Write-Host "[CTX] Building full context..."
+
+$repo = Get-Location
 
 $files = Get-ChildItem -Recurse -File |
-    Where-Object { $_.FullName -notmatch "node_modules|\.git" } |
-    Select-Object -First 30 FullName
+Where-Object {
+    $_.FullName -notmatch "node_modules|\.git|bin|obj"
+} |
+Select-Object FullName
 
-$output = @{
-    path = (Get-Location).Path
-    files = $files
+$git = git status
+$diff = git diff
+
+$data = @{
+    repo = $repo.Path
+    files = $files.FullName
+    git = $git
+    diff = $diff
     time = Get-Date
 }
 
-$output | ConvertTo-Json -Depth 3 | Out-File "context.json"
+$data | ConvertTo-Json -Depth 5 | Out-File "context.json"
 
-Write-Host "[CTX] Context saved"
+Write-Host "[CTX] Context ready"
