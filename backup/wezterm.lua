@@ -43,4 +43,14 @@ config.window_padding = {
 
 config.max_fps = 120
 
+
+{
+  key = "A",
+  mods = "CTRL|SHIFT",
+  action = wezterm.action.SpawnCommandInNewTab {
+    args = { "powershell", "-ExecutionPolicy", "Bypass", "-File", "scripts/ai.ps1" }
+  }
+},
+
+
 return config
