@@ -1,7 +1,19 @@
-Write-Host "[REVIEW] DevOS Proposal Viewer"
+. C:\DevOs\scripts\lib.ps1
 
-if (Test-Path "C:\DevOs\logs\proposal.json") {
-    Get-Content "C:\DevOs\logs\proposal.json"
-} else {
-    Write-Host "[REVIEW] No proposal found"
+Write-Host "=== DEVOS REVIEW ==="
+
+$patch = Get-Content "C:\DevOs\logs\patch.json" | ConvertFrom-Json
+
+foreach ($change in $patch.changes) {
+    Write-Host ""
+    Write-Host "FILE: $($change.file)"
+    Write-Host "TYPE: $($change.type)"
+    Write-Host "DIFF:"
+    Write-Host $change.diff
+}
+
+$confirm = Read-Host "Apply changes? (y/n)"
+
+if ($confirm -eq "y") {
+    powershell -ExecutionPolicy Bypass -File C:\DevOs\scripts\apply.ps1
 }
