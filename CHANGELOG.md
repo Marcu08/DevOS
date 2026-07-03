@@ -19,29 +19,31 @@
 - `rollback() = git reset --hard` (non più copia manuale)
 - `selfHeal()` ora crea branch + snapshot + loop safe
 - main flow committa su successo
-- backupFile mantenuto come safety net opzionale
-- `.gitignore` per `workspace/`, `backup/`, `logs/`
 
 **Salto:** `backup manuale + rollback custom + workspace finto` → `Git fa tutto, ogni run = branch, rollback = git reset, cronologia = vera`
 
-## v0.9.0 — AI FULL ENGINE (CONTEXT ENGINE)
+## v0.9.0 — CONTEXT ENGINE (REPO-AWARE FOUNDATION)
 
-### 🎯 Tre fondamenta prima del salto
-
-1. **🔍 Observability** — `logs/state.json` con stato agent, branch, errori
-2. **🧱 Isolamento** — `repo/` (codice vero) + `workspace/` (sandbox AI) separati
-3. **🧠 PR format standard** — `{ path, patch, reason }` per multi-file reasoning reale
-
-### 🧩 Nuovo: `agent/context.js`
-
-- `scanRepo()` — full repo scan con file importance ranking
+- `agent/context.js` — nuovo modulo core
+- `scanRepo()` — scansione ricorsiva del repository
+- `rankFile()` — scoring per importanza (index > .ts > .js > .json)
 - `buildDependencyMap()` — analisi require/import tra file
-- Weight system: `.ts/.tsx` > `.js/.jsx` > `.py` > altri
-- `index.js/index.ts` = priorità massima
-- Top files calcolati per prioritŕ
+- `buildContext()` — contesto strutturato con topFiles + dipendenze
+- `logs/context.json` — contesto persistito su disco
+- `logs/state.json` — stato runtime agent (task, status, branch, error)
+- PR format standardizzato: `{ path, patch, reason }`
+- `generatePR()` ora usa topFiles dal context engine
 
-### 🧠 Stato sistema v0.9.0
+**Salto:** `percezione casuale del repo` → `ranked system + dependency graph`
 
-> 🟣 **AI + Git + Context = sistema di modifica codice controllato e consapevole**
+### Architettura v0.9.0
 
-**Salto:** `patch file → git automation → script` → `context engine + multi-file reasoning`
+```
+buildContext()
+  ├── scanRepo()     → file list
+  ├── rankFile()     → score per file
+  └── buildDependencyMap() → require/import graph
+       │
+       ▼
+  context.json + state.json → PR generation
+```

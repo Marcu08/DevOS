@@ -2,10 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 const { applyUnifiedDiff } = require("./utils/diff");
-const { scanRepo } = require("./context");
+const { buildContext } = require("./context");
 
 const ROOT = "C:\\DevOs";
-const REPO = path.join(ROOT, "repo");
 const WORKSPACE = path.join(ROOT, "workspace");
 const LOGS = path.join(ROOT, "logs");
 const BACKUP = path.join(ROOT, "backup", "workspace");
@@ -52,30 +51,17 @@ function getFiles(dir, max = 15) {
   return results;
 }
 
-function prepareRepo() {
-  if (!fs.existsSync(REPO)) {
-    fs.mkdirSync(REPO, { recursive: true });
-    const files = getFiles(ROOT, 50);
-    const skip = [REPO, path.join(ROOT, "workspace"), path.join(ROOT, ".git"), path.join(ROOT, "backup"), path.join(ROOT, "backups"), path.join(ROOT, "logs")];
-    for (const f of files) {
-      if (skip.some(s => f.startsWith(s))) continue;
-      const rel = f.replace(ROOT, "");
-      const dest = path.join(REPO, rel);
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.copyFileSync(f, dest);
-    }
-  }
-}
-
 function prepareWorkspace() {
   if (!fs.existsSync(path.join(WORKSPACE, ".git"))) {
     fs.rmSync(WORKSPACE, { recursive: true, force: true });
     fs.mkdirSync(WORKSPACE, { recursive: true });
 
-    const files = getFiles(REPO, 30);
+    const files = getFiles(ROOT, 30);
+    const skip = [WORKSPACE, path.join(ROOT, ".git"), path.join(ROOT, "node_modules"), path.join(ROOT, "backup"), path.join(ROOT, "backups")];
 
     for (const f of files) {
-      const rel = f.replace(REPO, "");
+      if (skip.some(s => f.startsWith(s))) continue;
+      const rel = f.replace(ROOT, "");
       const dest = path.join(WORKSPACE, rel);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(f, dest);
@@ -156,8 +142,7 @@ function rollback() {
 }
 
 function generatePR() {
-  const ctx = scanRepo(REPO, 10);
-  const target = ctx.files[0] || { path: "/index.js" };
+  const target = context.topFiles[0] || { file: "/index.js" };
 
   return {
     title: `AI: ${task}`,
@@ -165,7 +150,7 @@ function generatePR() {
     risk: "unknown",
     files: [
       {
-        path: target.path,
+        path: target.file,
         patch: `@@ -1,3 +1,3 @@\n-old line\n+new line (${task})`,
         reason: `Modified for task: ${task}`
       }
@@ -213,11 +198,17 @@ function selfHeal(pr, maxRetries = 3) {
 
 fs.mkdirSync(LOGS, { recursive: true });
 
-prepareRepo();
 prepareWorkspace();
 
-const ctx = scanRepo(REPO, 30);
-agentState.context = { totalFiles: ctx.totalFiles, topFiles: ctx.topFiles.map(f => f.path) };
+const context = buildContext();
+
+fs.writeFileSync(path.join(LOGS, "context.json"), JSON.stringify(context, null, 2));
+
+agentState.context = {
+  totalFiles: context.totalFiles,
+  topFiles: context.topFiles.slice(0, 10).map(f => f.file)
+};
+agentState.status = "context_ready";
 writeState();
 
 const pr = generatePR();

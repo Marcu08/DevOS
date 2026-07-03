@@ -1,97 +1,102 @@
 const fs = require("fs");
 const path = require("path");
 
-const WEIGHT_MAP = {
-  ".js": 8,
-  ".ts": 9,
-  ".jsx": 8,
-  ".tsx": 9,
-  ".json": 4,
-  ".md": 2,
-  ".html": 3,
-  ".css": 3,
-  ".lua": 5,
-  ".py": 7,
-  ".yaml": 3,
-  ".yml": 3,
-  ".toml": 3,
-  ".env": 5,
-  ".gitignore": 4,
-  "index.js": 10,
-  "index.ts": 10,
-  "package.json": 7,
-  "config": 5,
-};
+const ROOT = "C:\\DevOs";
 
-function scanRepo(repoDir, maxFiles = 50) {
+function scanRepo(dir = ROOT, maxFiles = 200) {
   const files = [];
 
-  function walk(dir) {
+  function walk(current) {
     if (files.length >= maxFiles) return;
 
-    let entries;
-    try {
-      entries = fs.readdirSync(dir);
-    } catch {
-      return;
-    }
+    const entries = fs.readdirSync(current);
 
     for (const e of entries) {
-      const full = path.join(dir, e);
-      if (full.includes("node_modules") || full.includes(".git")) continue;
+      const full = path.join(current, e);
 
-      try {
-        const stat = fs.statSync(full);
-        if (stat.isDirectory()) {
-          walk(full);
-        } else {
-          const rel = full.replace(repoDir, "").replace(/\\/g, "/");
-          const ext = path.extname(full);
-          const base = path.basename(full);
+      if (full.includes("node_modules") || full.includes(".git") || full.includes("workspace") || full.includes("repo") || full.includes("backup")) {
+        continue;
+      }
 
-          let score = 1;
-          score += WEIGHT_MAP[ext] || 1;
-          score += WEIGHT_MAP[base] || 0;
-          score += base === "index.js" || base === "index.ts" ? 5 : 0;
-          score += Math.max(0, 5 - rel.split("/").length + 1);
+      const stat = fs.statSync(full);
 
-          files.push({ path: rel, ext, size: stat.size, score });
-        }
-      } catch {}
+      if (stat.isDirectory()) {
+        walk(full);
+      } else {
+        files.push(full);
+      }
+
+      if (files.length >= maxFiles) break;
     }
   }
 
-  walk(repoDir);
+  walk(dir);
 
-  files.sort((a, b) => b.score - a.score);
+  return files;
+}
 
-  return {
-    totalFiles: files.length,
-    totalSize: files.reduce((s, f) => s + f.size, 0),
-    files,
-    topFiles: files.slice(0, 10),
-  };
+function rankFile(file) {
+  const name = file.toLowerCase();
+
+  let score = 0;
+
+  if (name.includes("index")) score += 10;
+  if (name.endsWith(".ts")) score += 8;
+  if (name.endsWith(".js")) score += 6;
+  if (name.endsWith(".json")) score += 4;
+  if (name.endsWith(".ps1")) score += 3;
+
+  return score;
 }
 
 function buildDependencyMap(files) {
-  const deps = {};
-  for (const f of files) {
-    const content = fs.readFileSync(f.fullPath, "utf-8");
-    const requires = [];
-    const requireRe = /require\(["']([^"']+)["']\)/g;
-    const importRe = /from\s+["']([^"']+)["']/g;
-    let match;
-    while ((match = requireRe.exec(content)) !== null) {
-      requires.push(match[1]);
-    }
-    while ((match = importRe.exec(content)) !== null) {
-      requires.push(match[1]);
-    }
-    if (requires.length > 0) {
-      deps[f.path] = requires;
+  const map = {};
+
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(file, "utf-8");
+
+      const imports = [];
+
+      const requireMatches = content.match(/require\(["'`](.*?)["'`]\)/g) || [];
+      const importMatches = content.match(/import .* from ["'`](.*?)["'`]/g) || [];
+
+      [...requireMatches, ...importMatches].forEach(m => {
+        const mod = m.split(/["'`]/)[1];
+        imports.push(mod);
+      });
+
+      map[file.replace(ROOT, "").replace(/\\/g, "/")] = imports;
+    } catch {
+      map[file.replace(ROOT, "").replace(/\\/g, "/")] = [];
     }
   }
-  return deps;
+
+  return map;
 }
 
-module.exports = { scanRepo, buildDependencyMap };
+function buildContext() {
+  const files = scanRepo();
+
+  const ranked = files
+    .map(f => ({
+      file: f.replace(ROOT, "").replace(/\\/g, "/"),
+      score: rankFile(f)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const dependencyMap = buildDependencyMap(files);
+
+  const context = {
+    timestamp: new Date().toISOString(),
+    totalFiles: files.length,
+    topFiles: ranked.slice(0, 20),
+    dependencyMap
+  };
+
+  return context;
+}
+
+module.exports = {
+  buildContext
+};
