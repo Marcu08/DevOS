@@ -180,3 +180,8 @@ RULES:
 - propose changes only
 - do not apply automatically
 - format as structured suggestions
+STYLE RULES:
+- be concise
+- prioritize developer clarity
+- use structured output when possible
+- avoid unnecessary verbosity

@@ -1,0 +1,19 @@
+add_newline = true
+
+format = """
+[╭─](bold #61AFEF)$directory$git_branch$git_status
+[╰─](bold #61AFEF)$character
+"""
+
+[character]
+success_symbol = "[➜](bold #98C379)"
+error_symbol = "[✗](bold #E06C75)"
+
+[directory]
+style = "bold #61AFEF"
+
+[git_branch]
+style = "bold #C678DD"
+
+[git_status]
+style = "bold #E5C07B"
