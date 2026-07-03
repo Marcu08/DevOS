@@ -2,13 +2,22 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 const { applyUnifiedDiff } = require("./utils/diff");
+const { scanRepo } = require("./context");
 
 const ROOT = "C:\\DevOs";
-const WORKSPACE = "C:\\DevOs\\workspace";
+const REPO = path.join(ROOT, "repo");
+const WORKSPACE = path.join(ROOT, "workspace");
 const LOGS = path.join(ROOT, "logs");
-const BACKUP = "C:\\DevOs\\backup\\workspace";
+const BACKUP = path.join(ROOT, "backup", "workspace");
 
 const task = process.argv[2] || "analyze project";
+
+let agentState = { task, status: "started", branch: null, lastError: null };
+
+function writeState() {
+  agentState.timestamp = new Date().toISOString();
+  fs.writeFileSync(path.join(LOGS, "state.json"), JSON.stringify(agentState, null, 2));
+}
 
 function run(cmd, cwd = ROOT) {
   try {
@@ -43,15 +52,30 @@ function getFiles(dir, max = 15) {
   return results;
 }
 
+function prepareRepo() {
+  if (!fs.existsSync(REPO)) {
+    fs.mkdirSync(REPO, { recursive: true });
+    const files = getFiles(ROOT, 50);
+    const skip = [REPO, path.join(ROOT, "workspace"), path.join(ROOT, ".git"), path.join(ROOT, "backup"), path.join(ROOT, "backups"), path.join(ROOT, "logs")];
+    for (const f of files) {
+      if (skip.some(s => f.startsWith(s))) continue;
+      const rel = f.replace(ROOT, "");
+      const dest = path.join(REPO, rel);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(f, dest);
+    }
+  }
+}
+
 function prepareWorkspace() {
   if (!fs.existsSync(path.join(WORKSPACE, ".git"))) {
     fs.rmSync(WORKSPACE, { recursive: true, force: true });
     fs.mkdirSync(WORKSPACE, { recursive: true });
 
-    const files = getFiles(ROOT, 30);
+    const files = getFiles(REPO, 30);
 
     for (const f of files) {
-      const rel = f.replace(ROOT, "");
+      const rel = f.replace(REPO, "");
       const dest = path.join(WORKSPACE, rel);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(f, dest);
@@ -76,9 +100,10 @@ function backupFile(filePath) {
 }
 
 function createAgentBranch(taskName) {
-  const safe = taskName.replace(/\s+/g, "-").slice(0, 30);
-  const branch = `agent/${safe}-${Date.now()}`;
+  const safe = taskName.replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 30).replace(/-$/, "");
+  const branch = `agent/${safe || "run"}-${Date.now()}`;
   git(`checkout -b ${branch}`);
+  agentState.branch = branch;
   return branch;
 }
 
@@ -104,11 +129,11 @@ function applyPatch(filePath, diff) {
 
 function applyPatchToWorkspace(pr) {
   for (const file of pr.files) {
-    console.log(`[PATCH] ${file.file}`);
+    console.log(`[PATCH] ${file.path}`);
     try {
-      applyPatch(file.file, file.diff);
+      applyPatch(file.path, file.patch);
     } catch (e) {
-      console.log(`[ERROR] ${file.file}`);
+      console.log(`[ERROR] ${file.path}`);
     }
   }
 }
@@ -131,16 +156,18 @@ function rollback() {
 }
 
 function generatePR() {
-  const files = getFiles(ROOT, 10);
+  const ctx = scanRepo(REPO, 10);
+  const target = ctx.files[0] || { path: "/index.js" };
+
   return {
-    task,
+    title: `AI: ${task}`,
     summary: "AI real diff proposal",
     risk: "unknown",
     files: [
       {
-        file: files[0]?.replace(ROOT, "") || "index.js",
-        type: "modify",
-        diff: `@@ -1,3 +1,3 @@\n-old line\n+new line (${task})`
+        path: target.path,
+        patch: `@@ -1,3 +1,3 @@\n-old line\n+new line (${task})`,
+        reason: `Modified for task: ${task}`
       }
     ]
   };
@@ -148,13 +175,13 @@ function generatePR() {
 
 function validatePR(pr) {
   if (!pr?.files?.length) return false;
-  return pr.files.every(f => f.file && f.type && f.diff);
+  return pr.files.every(f => f.path && f.patch && f.reason);
 }
 
 function selfHeal(pr, maxRetries = 3) {
   let current = pr;
-  const branch = createAgentBranch(pr.task);
-  snapshot(pr.task);
+  const branch = createAgentBranch(pr.title || pr.task);
+  snapshot(pr.title || pr.task);
 
   for (let i = 0; i < maxRetries; i++) {
     console.log(`[LOOP] Attempt ${i + 1}`);
@@ -167,13 +194,16 @@ function selfHeal(pr, maxRetries = 3) {
     }
 
     console.log("[LOOP] FAILED → rollback");
+    agentState.lastError = check.error?.slice(0, 200);
+    agentState.status = "retrying";
+    writeState();
     rollback();
 
     current = {
       ...current,
       files: current.files.map(f => ({
         ...f,
-        diff: f.diff + `\n// retry ${i + 1}\n// error: ${check.error?.slice(0, 120)}`
+        patch: f.patch + `\n// retry ${i + 1}\n// error: ${check.error?.slice(0, 120)}`
       }))
     };
   }
@@ -183,12 +213,19 @@ function selfHeal(pr, maxRetries = 3) {
 
 fs.mkdirSync(LOGS, { recursive: true });
 
+prepareRepo();
 prepareWorkspace();
+
+const ctx = scanRepo(REPO, 30);
+agentState.context = { totalFiles: ctx.totalFiles, topFiles: ctx.topFiles.map(f => f.path) };
+writeState();
 
 const pr = generatePR();
 
 if (!validatePR(pr)) {
   console.log("[AGENT] Invalid PR");
+  agentState.status = "invalid_pr";
+  writeState();
   process.exit(1);
 }
 
@@ -197,8 +234,13 @@ const result = selfHeal(pr);
 if (result) {
   fs.writeFileSync(path.join(LOGS, "pr.json"), JSON.stringify(result, null, 2));
   git("add .");
-  git(`commit -m "agent: ${pr.task}" --allow-empty`);
-  console.log("[AGENT v0.8.4] COMMITTED");
+  git(`commit -m "agent: ${pr.title}" --allow-empty`);
+
+  agentState.status = "committed";
+  writeState();
+  console.log("[AGENT v0.9.0] COMMITTED");
 } else {
-  console.log("[AGENT v0.8.4] FAILED");
+  agentState.status = "failed";
+  writeState();
+  console.log("[AGENT v0.9.0] FAILED");
 }

@@ -20,5 +20,28 @@
 - `selfHeal()` ora crea branch + snapshot + loop safe
 - main flow committa su successo
 - backupFile mantenuto come safety net opzionale
+- `.gitignore` per `workspace/`, `backup/`, `logs/`
 
 **Salto:** `backup manuale + rollback custom + workspace finto` → `Git fa tutto, ogni run = branch, rollback = git reset, cronologia = vera`
+
+## v0.9.0 — AI FULL ENGINE (CONTEXT ENGINE)
+
+### 🎯 Tre fondamenta prima del salto
+
+1. **🔍 Observability** — `logs/state.json` con stato agent, branch, errori
+2. **🧱 Isolamento** — `repo/` (codice vero) + `workspace/` (sandbox AI) separati
+3. **🧠 PR format standard** — `{ path, patch, reason }` per multi-file reasoning reale
+
+### 🧩 Nuovo: `agent/context.js`
+
+- `scanRepo()` — full repo scan con file importance ranking
+- `buildDependencyMap()` — analisi require/import tra file
+- Weight system: `.ts/.tsx` > `.js/.jsx` > `.py` > altri
+- `index.js/index.ts` = priorità massima
+- Top files calcolati per prioritŕ
+
+### 🧠 Stato sistema v0.9.0
+
+> 🟣 **AI + Git + Context = sistema di modifica codice controllato e consapevole**
+
+**Salto:** `patch file → git automation → script` → `context engine + multi-file reasoning`
