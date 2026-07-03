@@ -1,3 +1,5 @@
+. C:\DevOs\scripts\lib.ps1
+
 Write-Host "DEVOS DOCTOR"
 Write-Host "============"
 

@@ -1,3 +1,5 @@
+. C:\DevOs\scripts\lib.ps1
+
 Write-Host "Checking PATH..."
 
 $tools = @("git","node","npm","wezterm","starship","fzf","zoxide")

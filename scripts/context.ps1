@@ -1,3 +1,5 @@
+. C:\DevOs\scripts\lib.ps1
+
 Write-Host "[CTX] Building full context..."
 
 $repo = Get-Location

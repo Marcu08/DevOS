@@ -1,8 +1,20 @@
 const fs = require("fs");
 const { execSync } = require("child_process");
+const path = require("path");
 
 const task = process.argv[2] || "analyze project";
 const cwd = process.cwd();
+
+const ROOT = "C:\\DevOs";
+
+const config = JSON.parse(
+    fs.readFileSync(
+        path.join(ROOT, "config", "devos.json"),
+        "utf8"
+    )
+);
+
+const LOG_DIR = path.join(config.root, "logs");
 
 function run(cmd) {
   return execSync(cmd, { encoding: "utf-8", cwd });
@@ -30,10 +42,10 @@ const context = {
 };
 
 // SAVE CONTEXT
-fs.mkdirSync("logs", { recursive: true });
+fs.mkdirSync(LOG_DIR, { recursive: true });
 
 fs.writeFileSync(
-  "logs/context.json",
+  path.join(LOG_DIR, "context.json"),
   JSON.stringify(context, null, 2)
 );
 
@@ -46,7 +58,7 @@ const proposal = {
 };
 
 fs.writeFileSync(
-  "logs/proposal.json",
+  path.join(LOG_DIR, "context.json"),
   JSON.stringify(proposal, null, 2)
 );
 
@@ -67,7 +79,7 @@ RULES:
 - format as structured suggestions
 `;
 
-fs.writeFileSync("logs/prompt.txt", prompt);
+fs.writeFileSync(path.join(LOG_DIR, "context.json")),
 
 console.log("[AGENT v0.6] Context built");
 console.log("[AGENT v0.6] Proposal generated");

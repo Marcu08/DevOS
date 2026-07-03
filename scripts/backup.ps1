@@ -1,3 +1,5 @@
+. C:\DevOs\scripts\lib.ps1
+
 $OutputEncoding = [Console]::OutputEncoding
 
 Write-Host "DEVOS BACKUP START"

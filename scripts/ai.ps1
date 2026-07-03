@@ -1,3 +1,6 @@
+. C:\DevOs\scripts\lib.ps1
+$env:DEVOS_ROOT = "C:\DevOs"
+Write-Host "[DEVOS] Profile loaded"
 Write-Host "[AI v0.6] Starting full loop..."
 
 powershell -ExecutionPolicy Bypass -File C:\DevOs\scripts\context.ps1
@@ -10,3 +13,4 @@ Start-Process powershell -ArgumentList @(
 )
 
 Write-Host "[AI v0.6] Loop completed"
+
