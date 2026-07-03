@@ -1,20 +1,21 @@
-const fs = require("fs");
+
 const { execSync } = require("child_process");
 const path = require("path");
 
 const task = process.argv[2] || "analyze project";
 const cwd = process.cwd();
 
+const fs = require("fs");
+const path = require("path");
+
 const ROOT = "C:\\DevOs";
 
 const config = JSON.parse(
-    fs.readFileSync(
-        path.join(ROOT, "config", "devos.json"),
-        "utf8"
-    )
+  fs.readFileSync(path.join(ROOT, "config", "devos.json"), "utf8")
 );
 
 const LOG_DIR = path.join(config.root, "logs");
+const AGENT_DIR = path.join(config.root, "agent");
 
 function run(cmd) {
   return execSync(cmd, { encoding: "utf-8", cwd });
@@ -58,7 +59,7 @@ const proposal = {
 };
 
 fs.writeFileSync(
-  path.join(LOG_DIR, "context.json"),
+  path.join(LOG_DIR, "proposal.json"),
   JSON.stringify(proposal, null, 2)
 );
 
@@ -79,7 +80,7 @@ RULES:
 - format as structured suggestions
 `;
 
-fs.writeFileSync(path.join(LOG_DIR, "context.json")),
+fs.writeFileSync(path.join(LOG_DIR, "prompt.json")),
 
 console.log("[AGENT v0.6] Context built");
 console.log("[AGENT v0.6] Proposal generated");
