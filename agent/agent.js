@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
+const { applyUnifiedDiff } = require("./utils/diff");
 
 // ========================
 // ROOT CONFIG
@@ -112,7 +113,7 @@ function applyPatch(filePath, diff) {
 
   backupFile(filePath);
 
-  const patched = content + "\n" + diff;
+  const patched = applyUnifiedDiff(content, diff);
 
   fs.writeFileSync(full, patched);
 }
@@ -184,13 +185,13 @@ function generatePR() {
 
   return {
     task,
-    summary: "AI refactor proposal",
+    summary: "AI real diff proposal",
     risk: "unknown",
     files: [
       {
         file: files[0]?.replace(ROOT, "") || "index.js",
         type: "modify",
-        diff: `// AI change for: ${task}`
+        diff: `@@ -1,3 +1,3 @@\n-old line\n+new line (${task})`
       }
     ]
   };
@@ -269,4 +270,4 @@ fs.writeFileSync(
   JSON.stringify(result || pr, null, 2)
 );
 
-console.log("[AGENT v0.8.2] DONE");
+console.log("[AGENT v0.8.3] DONE");
