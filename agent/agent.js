@@ -2,15 +2,20 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
+// ========================
+// ROOT CONFIG
+// ========================
+
 const ROOT = "C:\\DevOs";
-const LOGS = path.join(ROOT, "logs");
 const WORKSPACE = "C:\\DevOs\\workspace";
+const LOGS = path.join(ROOT, "logs");
+const BACKUP = "C:\\DevOs\\backup\\workspace";
 
 const task = process.argv[2] || "analyze project";
 
-// ------------------------
+// ========================
 // UTILS
-// ------------------------
+// ========================
 
 function run(cmd, cwd = ROOT) {
   try {
@@ -19,14 +24,14 @@ function run(cmd, cwd = ROOT) {
       cwd,
       stdio: ["pipe", "pipe", "ignore"]
     });
-  } catch (e) {
+  } catch {
     return "";
   }
 }
 
-// ------------------------
+// ========================
 // FILE SCAN
-// ------------------------
+// ========================
 
 function getFiles(dir, max = 15) {
   let results = [];
@@ -57,9 +62,9 @@ function getFiles(dir, max = 15) {
   return results;
 }
 
-// ------------------------
+// ========================
 // WORKSPACE
-// ------------------------
+// ========================
 
 function prepareWorkspace() {
   fs.rmSync(WORKSPACE, { recursive: true, force: true });
@@ -76,9 +81,103 @@ function prepareWorkspace() {
   }
 }
 
-// ------------------------
+// ========================
+// BACKUP SYSTEM
+// ========================
+
+function backupFile(filePath) {
+  const src = path.join(WORKSPACE, filePath);
+  const dest = path.join(BACKUP, filePath);
+
+  if (!fs.existsSync(src)) return;
+
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(src, dest);
+}
+
+// ========================
+// PATCH ENGINE
+// ========================
+
+function applyPatch(filePath, diff) {
+  const full = path.join(WORKSPACE, filePath);
+
+  let content = "";
+
+  try {
+    content = fs.readFileSync(full, "utf-8");
+  } catch {
+    content = "";
+  }
+
+  backupFile(filePath);
+
+  const patched = content + "\n" + diff;
+
+  fs.writeFileSync(full, patched);
+}
+
+// ========================
+// APPLY PR
+// ========================
+
+function applyPatchToWorkspace(pr) {
+  for (const file of pr.files) {
+    console.log(`[PATCH] ${file.file}`);
+
+    try {
+      applyPatch(file.file, file.diff);
+    } catch (e) {
+      console.log(`[ERROR] ${file.file}`);
+    }
+  }
+}
+
+// ========================
+// CHECK SYSTEM
+// ========================
+
+function runChecks() {
+  try {
+    execSync("node index.js", {
+      cwd: WORKSPACE,
+      stdio: "ignore"
+    });
+
+    return { ok: true };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e.toString()
+    };
+  }
+}
+
+// ========================
+// ROLLBACK
+// ========================
+
+function rollback() {
+  console.log("[ROLLBACK] restoring backup...");
+
+  try {
+    const files = fs.readdirSync(BACKUP, { recursive: true });
+
+    for (const f of files) {
+      const src = path.join(BACKUP, f);
+      const dest = path.join(WORKSPACE, f);
+
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(src, dest);
+    }
+  } catch {}
+
+  console.log("[ROLLBACK] done");
+}
+
+// ========================
 // PR GENERATION (MOCK AI)
-// ------------------------
+// ========================
 
 function generatePR() {
   const files = getFiles(ROOT, 10);
@@ -91,15 +190,15 @@ function generatePR() {
       {
         file: files[0]?.replace(ROOT, "") || "index.js",
         type: "modify",
-        diff: `// simulated change for: ${task}`
+        diff: `// AI change for: ${task}`
       }
     ]
   };
 }
 
-// ------------------------
+// ========================
 // VALIDATION
-// ------------------------
+// ========================
 
 function validatePR(pr) {
   if (!pr?.files?.length) return false;
@@ -109,41 +208,9 @@ function validatePR(pr) {
   );
 }
 
-// ------------------------
-// APPLY PATCH (SAFE SIMPLIFIED)
-// ------------------------
-
-function applyPatchToWorkspace(pr) {
-  for (const file of pr.files) {
-    const target = path.join(WORKSPACE, file.file);
-
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-
-    // SAFE MODE: overwrite simulation
-    fs.writeFileSync(target, file.diff);
-  }
-}
-
-// ------------------------
-// CHECK SYSTEM
-// ------------------------
-
-function runChecks() {
-  try {
-    execSync("node index.js", {
-      cwd: WORKSPACE,
-      stdio: "ignore"
-    });
-
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e.toString() };
-  }
-}
-
-// ------------------------
+// ========================
 // SELF HEAL LOOP
-// ------------------------
+// ========================
 
 function selfHeal(pr, maxRetries = 3) {
   let current = pr;
@@ -160,25 +227,31 @@ function selfHeal(pr, maxRetries = 3) {
       return current;
     }
 
-    console.log("[LOOP] FAILED");
+    console.log("[LOOP] FAILED → rollback");
+
+    rollback();
 
     current = {
       ...current,
       files: current.files.map(f => ({
         ...f,
-        diff: f.diff + `\n// fix attempt ${i + 1}\n// error: ${check.error?.slice(0, 100)}`
+        diff:
+          f.diff +
+          `\n// retry ${i + 1}\n// error: ${check.error?.slice(0, 120)}`
       }))
     };
   }
 
+  console.log("[LOOP] MAX RETRIES REACHED");
   return null;
 }
 
-// ------------------------
+// ========================
 // MAIN
-// ------------------------
+// ========================
 
 fs.mkdirSync(LOGS, { recursive: true });
+fs.mkdirSync(BACKUP, { recursive: true });
 
 prepareWorkspace();
 
@@ -196,4 +269,4 @@ fs.writeFileSync(
   JSON.stringify(result || pr, null, 2)
 );
 
-console.log("[AGENT v0.8.1] DONE");     
+console.log("[AGENT v0.8.2] DONE");
