@@ -4,14 +4,19 @@ const { execSync } = require("child_process");
 
 const ROOT = "C:\\DevOs";
 const LOGS = path.join(ROOT, "logs");
+const WORKSPACE = "C:\\DevOs\\workspace";
 
 const task = process.argv[2] || "analyze project";
 
-function run(cmd) {
+// ------------------------
+// UTILS
+// ------------------------
+
+function run(cmd, cwd = ROOT) {
   try {
     return execSync(cmd, {
       encoding: "utf-8",
-      cwd: ROOT,
+      cwd,
       stdio: ["pipe", "pipe", "ignore"]
     });
   } catch (e) {
@@ -20,14 +25,7 @@ function run(cmd) {
 }
 
 // ------------------------
-// 1. CONTEXT BUILD
-// ------------------------
-
-let gitStatus = run("git status");
-let gitDiff = run("git diff");
-
-// ------------------------
-// 2. SIMPLE FILE SCAN
+// FILE SCAN
 // ------------------------
 
 function getFiles(dir, max = 15) {
@@ -40,17 +38,18 @@ function getFiles(dir, max = 15) {
 
     for (const e of entries) {
       const full = path.join(d, e);
+
+      if (full.includes("node_modules") || full.includes(".git")) continue;
+
       const stat = fs.statSync(full);
 
       if (stat.isDirectory()) {
-        if (!full.includes("node_modules") && !full.includes(".git")) {
-          walk(full);
-        }
+        walk(full);
       } else {
         results.push(full);
       }
 
-      if (results.length >= max) break;
+      if (results.length >= max) return;
     }
   }
 
@@ -58,76 +57,143 @@ function getFiles(dir, max = 15) {
   return results;
 }
 
-const files = getFiles(ROOT);
-
 // ------------------------
-// 3. BUILD SNAPSHOT
+// WORKSPACE
 // ------------------------
 
-const snapshot = files.map(f => {
-  try {
-    return {
-      file: f.replace(ROOT, ""),
-      content: fs.readFileSync(f, "utf-8").slice(0, 1500)
-    };
-  } catch {
-    return null;
+function prepareWorkspace() {
+  fs.rmSync(WORKSPACE, { recursive: true, force: true });
+  fs.mkdirSync(WORKSPACE, { recursive: true });
+
+  const files = getFiles(ROOT, 30);
+
+  for (const f of files) {
+    const rel = f.replace(ROOT, "");
+    const dest = path.join(WORKSPACE, rel);
+
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(f, dest);
   }
-}).filter(Boolean);
+}
 
 // ------------------------
-// 4. PR GENERATION (MOCK AI LAYER)
+// PR GENERATION (MOCK AI)
 // ------------------------
-// qui in futuro colleghi opencode / LLM
 
 function generatePR() {
+  const files = getFiles(ROOT, 10);
+
   return {
     task,
     summary: "AI refactor proposal",
     risk: "unknown",
     files: [
       {
-        file: snapshot[0]?.file || "unknown.js",
+        file: files[0]?.replace(ROOT, "") || "index.js",
         type: "modify",
-        diff: `@@ -1,3 +1,3 @@\n- old\n+ improved (${task})`
+        diff: `// simulated change for: ${task}`
       }
     ]
   };
 }
 
-const pr = generatePR();
-
 // ------------------------
-// 5. VALIDATION LAYER
+// VALIDATION
 // ------------------------
 
 function validatePR(pr) {
-  if (!pr.files || !Array.isArray(pr.files)) return false;
-  if (pr.files.length === 0) return false;
+  if (!pr?.files?.length) return false;
 
-  for (const f of pr.files) {
-    if (!f.file || !f.type || !f.diff) return false;
-  }
-
-  return true;
+  return pr.files.every(f =>
+    f.file && f.type && f.diff
+  );
 }
 
-const isValid = validatePR(pr);
+// ------------------------
+// APPLY PATCH (SAFE SIMPLIFIED)
+// ------------------------
+
+function applyPatchToWorkspace(pr) {
+  for (const file of pr.files) {
+    const target = path.join(WORKSPACE, file.file);
+
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+
+    // SAFE MODE: overwrite simulation
+    fs.writeFileSync(target, file.diff);
+  }
+}
 
 // ------------------------
-// 6. OUTPUT
+// CHECK SYSTEM
+// ------------------------
+
+function runChecks() {
+  try {
+    execSync("node index.js", {
+      cwd: WORKSPACE,
+      stdio: "ignore"
+    });
+
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.toString() };
+  }
+}
+
+// ------------------------
+// SELF HEAL LOOP
+// ------------------------
+
+function selfHeal(pr, maxRetries = 3) {
+  let current = pr;
+
+  for (let i = 0; i < maxRetries; i++) {
+    console.log(`[LOOP] Attempt ${i + 1}`);
+
+    applyPatchToWorkspace(current);
+
+    const check = runChecks();
+
+    if (check.ok) {
+      console.log("[LOOP] SUCCESS");
+      return current;
+    }
+
+    console.log("[LOOP] FAILED");
+
+    current = {
+      ...current,
+      files: current.files.map(f => ({
+        ...f,
+        diff: f.diff + `\n// fix attempt ${i + 1}\n// error: ${check.error?.slice(0, 100)}`
+      }))
+    };
+  }
+
+  return null;
+}
+
+// ------------------------
+// MAIN
 // ------------------------
 
 fs.mkdirSync(LOGS, { recursive: true });
 
-if (isValid) {
-  fs.writeFileSync(
-    path.join(LOGS, "pr.json"),
-    JSON.stringify(pr, null, 2)
-  );
+prepareWorkspace();
 
-  console.log("[AGENT v0.8] PR generated");
-  console.log("[AGENT v0.8] Ready for review");
-} else {
-  console.log("[AGENT v0.8] Invalid PR - aborted");
+const pr = generatePR();
+
+if (!validatePR(pr)) {
+  console.log("[AGENT] Invalid PR");
+  process.exit(1);
 }
+
+const result = selfHeal(pr);
+
+fs.writeFileSync(
+  path.join(LOGS, "pr.json"),
+  JSON.stringify(result || pr, null, 2)
+);
+
+console.log("[AGENT v0.8.1] DONE");     
