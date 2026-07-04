@@ -1,5 +1,15 @@
 # DevOS Changelog
 
+## v0.9.2 — DECLARATIVE PIPELINE (2026-07-05)
+
+- `agent.js` — rewritten as declarative pipeline: `main` → `initialize` → `runContext` → `runPlanner` → `runExecutor` → `runValidator` → `finish`
+- `agent/config.js` — new API: `DEVOS.root`, `DEVOS.workspace`, `DEVOS.logs`, `DEVOS.backup` (instead of `config.get(...)`)
+- `agent/context.js` — added `complexity` per file (lines, functions, imports, exports)
+- `agent/context.js` — `rankFile()` now scores structural files (package.json, README, tsconfig, docker, eslint, workflows)
+- `agent/executor.js` — new module: `generatePR`, `validate`, `selfHeal`, `commit`
+
+**Salto:** `agent.js orchestratore generico` → `pipeline dichiarativa con complexity + ranking strutturale`
+
 ## v0.9.1 — ARCHITECTURE REFACTOR (2026-07-05)
 
 - `agent/config.js` — centralized configuration reader from `config/devos.json`

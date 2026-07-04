@@ -3,17 +3,23 @@ const path = require("path");
 
 const CONFIG_PATH = path.resolve(__dirname, "..", "config", "devos.json");
 
-let config = null;
+let cfg = null;
 
 function load() {
-  if (config) return config;
+  if (cfg) return cfg;
   const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
-  config = JSON.parse(raw);
-  return config;
+  cfg = JSON.parse(raw);
+  return cfg;
 }
 
-function get(key) {
-  return load()[key];
-}
+load();
 
-module.exports = { load, get };
+const DEVOS = {
+  root: cfg.root,
+  workspace: path.join(cfg.root, "workspace"),
+  logs: path.join(cfg.root, "logs"),
+  backup: path.join(cfg.root, "backup", "workspace"),
+  config: cfg,
+};
+
+module.exports = DEVOS;

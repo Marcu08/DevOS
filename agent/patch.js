@@ -2,21 +2,19 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 const { applyUnifiedDiff } = require("./utils/diff");
-const config = require("./config");
+const DEVOS = require("./config");
 const workspace = require("./workspace");
 
-const BACKUP = path.join(config.get("root"), "backup", "workspace");
-
 function backupFile(filePath) {
-  const src = path.join(workspace.WORKSPACE, filePath);
-  const dest = path.join(BACKUP, filePath);
+  const src = path.join(DEVOS.workspace, filePath);
+  const dest = path.join(DEVOS.backup, filePath);
   if (!fs.existsSync(src)) return;
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.copyFileSync(src, dest);
 }
 
 function applyPatch(filePath, diff) {
-  const full = path.join(workspace.WORKSPACE, filePath);
+  const full = path.join(DEVOS.workspace, filePath);
   let content = "";
   try { content = fs.readFileSync(full, "utf-8"); } catch {}
   backupFile(filePath);
@@ -33,7 +31,7 @@ function applyPatches(pr) {
 
 function runChecks() {
   try {
-    execSync("node index.js", { cwd: workspace.WORKSPACE, stdio: "ignore" });
+    execSync("node index.js", { cwd: DEVOS.workspace, stdio: "ignore" });
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e.toString() };

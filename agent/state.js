@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const config = require("./config");
+const DEVOS = require("./config");
 
-const LOGS = path.join(config.get("root"), "logs");
+const LOGS = DEVOS.logs;
 
 let agentState = { task: "", status: "idle", branch: null, lastError: null };
 

@@ -1,62 +1,68 @@
 const path = require("path");
 const fs = require("fs");
-const { buildContext } = require("./context");
-const { buildPlan, savePlan } = require("./planner");
-const config = require("./config");
+const DEVOS = require("./config");
 const workspace = require("./workspace");
-const patch = require("./patch");
+const contextModule = require("./context");
+const planner = require("./planner");
+const executor = require("./executor");
 const state = require("./state");
 
-const LOGS = path.join(config.get("root"), "logs");
+function initialize() {
+  const task = process.argv[2] || "analyze project";
+  state.init(task);
+  fs.mkdirSync(DEVOS.logs, { recursive: true });
+  workspace.prepareWorkspace();
+}
 
-const task = process.argv[2] || "analyze project";
+function runContext() {
+  const ctx = contextModule.buildContext();
+  fs.writeFileSync(path.join(DEVOS.logs, "context.json"), JSON.stringify(ctx, null, 2));
+  state.update({
+    context: {
+      totalFiles: ctx.totalFiles,
+      topFiles: ctx.topFiles.slice(0, 10).map(f => f.file)
+    }
+  });
+  return ctx;
+}
 
-state.init(task);
-fs.mkdirSync(LOGS, { recursive: true });
+function runPlanner(ctx) {
+  const plan = planner.buildPlan(state.get().task, ctx);
+  planner.savePlan(plan, path.join(DEVOS.logs, "plan.json"));
+  state.update({ plan, status: "plan_ready" });
+  return plan;
+}
 
-workspace.prepareWorkspace();
+function runExecutor(ctx) {
+  return executor.generatePR(state.get().task, ctx);
+}
 
-const context = buildContext();
-fs.writeFileSync(path.join(LOGS, "context.json"), JSON.stringify(context, null, 2));
-
-state.update({
-  context: {
-    totalFiles: context.totalFiles,
-    topFiles: context.topFiles.slice(0, 10).map(f => f.file)
+function runValidator(pr) {
+  if (!executor.validate(pr)) {
+    state.update({ status: "invalid_pr" });
+    return null;
   }
-});
-
-const plan = buildPlan(task, context);
-savePlan(plan, path.join(LOGS, "plan.json"));
-state.update({ plan, status: "plan_ready" });
-
-const target = context.topFiles[0] || { file: "/index.js" };
-const pr = {
-  title: `AI: ${task}`,
-  summary: "AI real diff proposal",
-  risk: "unknown",
-  files: [{
-    path: target.file,
-    patch: `@@ -1,3 +1,3 @@\n-old line\n+new line (${task})`,
-    reason: `Modified for task: ${task}`
-  }]
-};
-
-if (!patch.validatePR(pr)) {
-  console.log("[AGENT] Invalid PR");
-  state.update({ status: "invalid_pr" });
-  process.exit(1);
+  return executor.selfHeal(state.get().task, pr);
 }
 
-const result = patch.selfHeal(task, pr, state);
-
-if (result) {
-  fs.writeFileSync(path.join(LOGS, "pr.json"), JSON.stringify(result, null, 2));
-  workspace.git("add .");
-  workspace.git(`commit -m "agent: ${pr.title}" --allow-empty`);
-  state.update({ status: "committed" });
-  console.log("[AGENT v0.9.1] COMMITTED");
-} else {
-  state.update({ status: "failed" });
-  console.log("[AGENT v0.9.0] FAILED");
+function finish(result) {
+  if (result) {
+    executor.commit(result);
+    state.update({ status: "committed" });
+    console.log("[AGENT v0.9.2] COMMITTED");
+  } else {
+    state.update({ status: "failed" });
+    console.log("[AGENT v0.9.2] FAILED");
+  }
 }
+
+function main() {
+  initialize();
+  const ctx = runContext();
+  runPlanner(ctx);
+  const pr = runExecutor(ctx);
+  const result = runValidator(pr);
+  finish(result);
+}
+
+main();

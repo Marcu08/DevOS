@@ -1,12 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const config = require("./config");
+const DEVOS = require("./config");
 
-const ROOT = config.get("root");
-const WORKSPACE = path.join(ROOT, "workspace");
-
-function git(cmd, cwd = WORKSPACE) {
+function git(cmd, cwd = DEVOS.workspace) {
   return execSync(`git ${cmd}`, { encoding: "utf-8", cwd });
 }
 
@@ -32,24 +29,24 @@ function getFiles(dir, max = 15) {
 }
 
 function prepareWorkspace() {
-  const skip = [WORKSPACE, path.join(ROOT, ".git"), path.join(ROOT, "node_modules"), path.join(ROOT, "backup"), path.join(ROOT, "backups")];
+  const skip = [DEVOS.workspace, path.join(DEVOS.root, ".git"), path.join(DEVOS.root, "node_modules"), path.join(DEVOS.root, "backup"), path.join(DEVOS.root, "backups")];
 
-  if (fs.existsSync(path.join(WORKSPACE, ".git"))) {
+  if (fs.existsSync(path.join(DEVOS.workspace, ".git"))) {
     try { git("checkout main 2>nul || git checkout master 2>nul"); } catch {}
     try { git("reset --hard HEAD"); } catch {}
     try { git("clean -fd"); } catch {}
     return;
   }
 
-  fs.rmSync(WORKSPACE, { recursive: true, force: true });
-  fs.mkdirSync(WORKSPACE, { recursive: true });
+  fs.rmSync(DEVOS.workspace, { recursive: true, force: true });
+  fs.mkdirSync(DEVOS.workspace, { recursive: true });
 
-  const files = getFiles(ROOT, 30);
+  const files = getFiles(DEVOS.root, 30);
 
   for (const f of files) {
     if (skip.some(s => f.startsWith(s))) continue;
-    const rel = f.replace(ROOT, "");
-    const dest = path.join(WORKSPACE, rel);
+    const rel = f.replace(DEVOS.root, "");
+    const dest = path.join(DEVOS.workspace, rel);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(f, dest);
   }
@@ -76,4 +73,4 @@ function rollback() {
   try { git("clean -fd"); } catch {}
 }
 
-module.exports = { prepareWorkspace, createAgentBranch, snapshot, rollback, git, WORKSPACE, ROOT };
+module.exports = { prepareWorkspace, createAgentBranch, snapshot, rollback, git, WORKSPACE: DEVOS.workspace, ROOT: DEVOS.root };
