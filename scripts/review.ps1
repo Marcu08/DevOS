@@ -1,8 +1,8 @@
-. C:\DevOs\scripts\lib.ps1
+. $PSScriptRoot\lib.ps1
 
 Write-Host "=== DEVOS REVIEW ==="
 
-$patch = Get-Content "C:\DevOs\logs\patch.json" | ConvertFrom-Json
+$patch = Get-Content "$env:DEVOS_ROOT\logs\patch.json" | ConvertFrom-Json
 
 foreach ($change in $patch.changes) {
     Write-Host ""
@@ -15,5 +15,5 @@ foreach ($change in $patch.changes) {
 $confirm = Read-Host "Apply changes? (y/n)"
 
 if ($confirm -eq "y") {
-    powershell -ExecutionPolicy Bypass -File C:\DevOs\scripts\apply.ps1
+    powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\apply.ps1"
 }

@@ -1,8 +1,8 @@
 {
-  "version": "0.6.3",
+  "version": "0.9.1",
   "root": "C:\\DevOs",
   "workspace": "C:\\Users\\marzu\\OneDrive\\Desktop",
   "editor": "code",
-  "ai": "opencode"
+  "ai": "opencode",
   "safeMode": true
 }

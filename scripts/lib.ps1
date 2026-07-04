@@ -1,16 +1,17 @@
-$CONFIG_PATH = "C:\DevOs\config\devos.json"
+$DEVOS_ROOT = Resolve-Path "$PSScriptRoot\.."
+$CONFIG_PATH = "$DEVOS_ROOT\config\devos.json"
 
-if (!(Test-Path $CONFIG_PATH)) {
+if (Test-Path $CONFIG_PATH) {
+    $Config = Get-Content $CONFIG_PATH | ConvertFrom-Json
+} else {
     Write-Host "[DEVOS][WARN] Config missing - using fallback"
     $Config = @{
-        root = "C:\DevOs"
+        root = "$DEVOS_ROOT"
         workspace = $HOME
         ai = "opencode"
-        version = "0.6.3"
+        version = "0.0.0"
     } | ConvertTo-Json | ConvertFrom-Json
 }
-
-$Config = Get-Content $CONFIG_PATH | ConvertFrom-Json
 
 $env:DEVOS_ROOT = $Config.root
 $env:DEVOS_WORKSPACE = $Config.workspace

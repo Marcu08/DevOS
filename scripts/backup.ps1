@@ -1,4 +1,4 @@
-. C:\DevOs\scripts\lib.ps1
+. $PSScriptRoot\lib.ps1
 
 $OutputEncoding = [Console]::OutputEncoding
 

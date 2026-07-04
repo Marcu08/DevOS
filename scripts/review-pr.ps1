@@ -1,6 +1,6 @@
-. C:\DevOs\scripts\lib.ps1
+. $PSScriptRoot\lib.ps1
 
-$pr = Get-Content "C:\DevOs\logs\pr.json" | ConvertFrom-Json
+$pr = Get-Content "$env:DEVOS_ROOT\logs\pr.json" | ConvertFrom-Json
 
 Write-Host "=== DEVOS PR REVIEW ==="
 Write-Host "Task: $($pr.task)"
@@ -19,5 +19,5 @@ foreach ($file in $pr.files) {
 $choice = Read-Host "Merge PR? (y/n)"
 
 if ($choice -eq "y") {
-    powershell -ExecutionPolicy Bypass -File C:\DevOs\scripts\apply-pr.ps1
+    powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\apply-pr.ps1"
 }

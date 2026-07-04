@@ -1,5 +1,22 @@
 # DevOS Changelog
 
+## v0.9.1 — ARCHITECTURE REFACTOR (2026-07-05)
+
+- `agent/config.js` — centralized configuration reader from `config/devos.json`
+- `agent/workspace.js` — extracted workspace management (prepare, branch, snapshot, rollback)
+- `agent/state.js` — extracted runtime state management (init, update, persist)
+- `agent/patch.js` — extracted patch/PR logic (apply, validate, selfHeal)
+- `agent/agent.js` — reduced from 244 to ~90 lines (pure orchestrator)
+- `agent/context.js` — enriched with `language` detection, `exportsMap` per file
+- `agent/index.js` — now a proper entry point (calls agent.js)
+- All hardcoded `C:\DevOs` paths removed from JS modules (use `config/devos.json`)
+- All PowerShell scripts use `$PSScriptRoot` instead of hardcoded paths
+- `config/devos.json` — fixed invalid JSON (missing comma), version bumped to 0.9.0
+- `README.md` — rewritten cleanly (removed prompt/step artifacts)
+- `scripts/lib.ps1` — derives root from `$PSScriptRoot`, proper config fallback
+
+**Salto:** `codice monolitico + path hardcoded + JSON rotto` → `modularizzazione + config centralizzata + contesto ricco`
+
 ## v0.8.3 — REAL DIFF PATCH ENGINE
 
 - Nuovo modulo `agent/utils/diff.js` con parser unified diff

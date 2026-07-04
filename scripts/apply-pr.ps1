@@ -1,13 +1,16 @@
-. C:\DevOs\scripts\lib.ps1
+. $PSScriptRoot\lib.ps1
 
 Write-Host "[DEVOS] Applying PR..."
 
-if (!(Test-Path "C:\DevOs\logs\pr.json")) {
+$prPath = "$env:DEVOS_ROOT\logs\pr.json"
+
+if (!(Test-Path $prPath)) {
     Write-Host "[DEVOS] No PR found"
     exit 1
 }
 
-# BACKUP FULL REPO
+$pr = Get-Content $prPath | ConvertFrom-Json
+
 Copy-Item $env:DEVOS_ROOT "$env:DEVOS_ROOT\backup\pre_pr" -Recurse -Force
 
 foreach ($file in $pr.files) {
