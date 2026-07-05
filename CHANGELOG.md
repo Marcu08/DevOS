@@ -1,5 +1,16 @@
 # DevOS Changelog
 
+## v0.9.4 — VALIDATOR ENGINE (2026-07-05)
+
+- `agent/validator/` — modular validators: syntax (`node --check`), node (`node index.js`), git (branch, clean, conflicts), lint (eslint)
+- `agent/validator/index.js` — orchestrator: loads config, runs enabled validators, builds report
+- `agent/validator/report.js` — structured report builder → `logs/report.json`
+- `agent/agent.js` — Decision Engine: PASS / RETRY / ROLLBACK based on validator report
+- `config/devos.json` — new section: `validator { syntax, git, lint, node, command, retry }`
+- `executor.js` — queue simplified: validate PR → apply patches → commit (validation delegated to Validator Engine)
+
+**Salto:** `esecuzione senza verifica esterna` → `validator engine modulare con decision engine e report strutturato`
+
 ## v0.9.3 — EXECUTION ENGINE (2026-07-05)
 
 - `state.js` — formal State Machine: Idle → Planning → Executing → Validating → Completed | Failed | Rollback

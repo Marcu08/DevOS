@@ -6,6 +6,7 @@ const contextModule = require("./context");
 const planner = require("./planner");
 const executor = require("./executor");
 const validator = require("./validator");
+const validatorEngine = require("./validator/index");
 const state = require("./state");
 
 function initialize() {
@@ -63,13 +64,53 @@ function runExecutor(ctx) {
   return executor.run(plan);
 }
 
-function finish(result) {
-  if (result) {
+function runValidatorEngine(result) {
+  if (!result) return null;
+  state.transition("Validating");
+  const context = { modifiedFiles: result.modifiedFiles || [] };
+  return validatorEngine.validate(context);
+}
+
+function decision(report) {
+  if (!report) return "ROLLBACK";
+
+  const failed = report.validators.filter(v => v.status === "failed");
+
+  if (failed.length === 0) return "PASS";
+
+  const names = failed.map(v => v.name);
+
+  if (names.includes("git")) return "ROLLBACK";
+  if (names.includes("syntax")) return "RETRY";
+  if (names.includes("node")) return "RETRY";
+
+  return "ROLLBACK";
+}
+
+function executeDecision(decision, result) {
+  if (decision === "PASS" && result) {
     state.endExecution("completed");
-    console.log("[AGENT v0.9.3] COMMITTED");
-  } else {
+    console.log("[AGENT v0.9.4] ALL VALIDATORS PASSED — COMMITTED");
+    return;
+  }
+
+  if (decision === "RETRY") {
+    console.log("[AGENT v0.9.4] VALIDATION FAILED — RETRYING");
+    workspace.rollback();
+    const ctx = runContext();
+    const plan = runPlanner(ctx);
+    if (!runValidator(ctx, plan)) return;
+    const newResult = runExecutor(ctx);
+    const newReport = runValidatorEngine(newResult);
+    const newDecision = decision(newReport);
+    executeDecision(newDecision, newResult);
+    return;
+  }
+
+  if (decision === "ROLLBACK") {
+    console.log("[AGENT v0.9.4] VALIDATION FAILED — ROLLBACK");
+    workspace.rollback();
     state.endExecution("failed");
-    console.log("[AGENT v0.9.3] FAILED");
   }
 }
 
@@ -81,7 +122,9 @@ function main() {
   if (!runValidator(ctx, plan)) return;
 
   const result = runExecutor(ctx);
-  finish(result);
+  const report = runValidatorEngine(result);
+  const dec = decision(report);
+  executeDecision(dec, result);
 }
 
 main();

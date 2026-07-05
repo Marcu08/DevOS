@@ -1,8 +1,16 @@
 {
-  "version": "0.9.3",
+  "version": "0.9.4",
   "root": "C:\\DevOs",
   "workspace": "C:\\Users\\marzu\\OneDrive\\Desktop",
   "editor": "code",
   "ai": "opencode",
-  "safeMode": true
+  "safeMode": true,
+  "validator": {
+    "syntax": true,
+    "git": true,
+    "lint": true,
+    "node": true,
+    "command": "node index.js",
+    "retry": 3
+  }
 }

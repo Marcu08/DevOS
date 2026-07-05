@@ -34,8 +34,6 @@ function buildQueue(task, pr) {
   const steps = [
     { action: "validate", label: "Validate PR", type: "pr", retryPolicy: { maxRetries: 0, retryOn: [] } },
     { action: "applyPatch", label: "Apply patches", retryPolicy: { maxRetries: 2, retryOn: ["validation"] } },
-    { action: "runChecks", label: "Run validation checks", retryPolicy: { maxRetries: 2, retryOn: ["timeout"] } },
-    { action: "validate", label: "Final validation", type: "checks", retryPolicy: { maxRetries: 0, retryOn: [] } },
     { action: "commit", label: "Git commit", retryPolicy: { maxRetries: 1, retryOn: ["timeout"] } },
   ];
 
@@ -99,9 +97,7 @@ function run(plan) {
 
       if (attempts <= maxRetries && def.retryPolicy.retryOn.some(r => result.error?.includes(r))) {
         const rollbackAction = loadAction("rollback");
-        if (rollbackAction) {
-          rollbackAction.run(step, context);
-        }
+        if (rollbackAction) rollbackAction.run(step, context);
         continue;
       }
 
@@ -119,9 +115,7 @@ function run(plan) {
       state.updateStep(step.id, { status: "failed", error: step.error, ended: step.ended });
 
       const rollbackAction = loadAction("rollback");
-      if (rollbackAction) {
-        rollbackAction.run(step, context);
-      }
+      if (rollbackAction) rollbackAction.run(step, context);
 
       execution.steps.push({ ...step });
       saveExecutionLog(execution);
@@ -132,7 +126,8 @@ function run(plan) {
     saveExecutionLog(execution);
   }
 
-  context.result = { pr, branch: state.get().branch };
+  const modifiedFiles = pr.files.map(f => f.path);
+  context.result = { pr, branch: state.get().branch, modifiedFiles };
 
   execution.ended = new Date().toISOString();
   execution.status = "completed";
