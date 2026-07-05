@@ -1,5 +1,54 @@
 # DevOS Changelog
 
+## v1.0.0 — STABILIZATION (2026-07-05)
+
+- Final architecture: Context → Reasoning → Planner → Executor → Validator → Decision → Memory
+- `agent/agent.js` — full healing loop with error analysis, memory integration, tool auto-run
+- `README.md` — rewritten with complete architecture documentation
+- `config/devos.json` — unified config for all engines (validator, tools, memory, reasoning, logging)
+
+**Salto:** `feature incrementali` → `piattaforma stabile con 10 engines integrati`
+
+## v0.9.9 — SELF-HEALING (2026-07-05)
+
+- `agent/agent.js` — healing loop: on failure → learn from memory → run pre-healing tools → retry with reasoning
+- `agent/memory/` — integrated into healing flow: `learnFromFailure()` returns similar errors and patterns
+- `agent/tools/` — auto-run `npm install` before retry if node validator failed
+- Max retries from config (`validator.retry`), error tracking per attempt
+
+**Salto:** `retry semplice` → `healing loop con memoria, tool automatici e analisi errori`
+
+## v0.9.8 — TOOL ENGINE (2026-07-05)
+
+- `agent/tools/` — modular tool runners: eslint, npm, tests, doctor
+- `agent/tools/index.js` — registry with `Tool.run("name", args)` interface
+- Auto-detection: eslint config, test framework (jest/vitest/npm), package.json
+- Doctor tool checks git, node, npm, workspace health
+
+**Salto:** `comandi sparsi nel codice` → `tool engine con registry e auto-detection`
+
+## v0.9.7 — MEMORY ENGINE (2026-07-05)
+
+- `agent/memory/` — persistent memory: history, mistakes, patterns, solutions
+- `agent/memory/history.js` — logs all runs with status, confidence, duration
+- `agent/memory/mistakes.js` — tracks failures with error, file, stage
+- `agent/memory/patterns.js` — learns from success/failure per file pattern
+- `agent/memory/solutions.js` — caches successful solutions keyed by task
+- `agent/memory/index.js` — `learnFromFailure()` returns similar past errors + patterns
+
+**Salto:** `senza stato tra run` → `memoria persistente con apprendimento da errori`
+
+## v0.9.6 — PATCH ENGINE (2026-07-05)
+
+- `agent/patch-engine/` — unified diff engine: parser, applier, generator, matcher
+- `agent/patch-engine/parser.js` — parses `@@ -s,c +s,c @@` hunks with context lines
+- `agent/patch-engine/applier.js` — applies hunks with line offset tracking
+- `agent/patch-engine/generator.js` — generates proper unified diffs from old/new content
+- `agent/patch-engine/matcher.js` — context line matching for robust patch application
+- `agent/utils/diff.js` — replaced by new patch-engine
+
+**Salto:** `diff testuale semplice` → `unified diff engine con parsing e generazione reali`
+
 ## v0.9.5 — AI REASONING ENGINE (2026-07-05)
 
 - `agent/reasoning/` — modular reasoning pipeline: analyze → planner → confidence → reviewer

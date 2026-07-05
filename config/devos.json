@@ -1,5 +1,6 @@
 {
-  "version": "0.9.5",
+  "version": "1.0.0",
+  "name": "DevOS",
   "root": "C:\\DevOs",
   "workspace": "C:\\Users\\marzu\\OneDrive\\Desktop",
   "editor": "code",
@@ -12,5 +13,29 @@
     "node": true,
     "command": "node index.js",
     "retry": 3
+  },
+  "tools": {
+    "npm": true,
+    "eslint": true,
+    "tests": true
+  },
+  "memory": {
+    "enabled": true,
+    "maxHistory": 100,
+    "maxMistakes": 50,
+    "maxPatterns": 30,
+    "maxSolutions": 50
+  },
+  "reasoning": {
+    "confidenceThreshold": 0.6,
+    "maxHealingRetries": 3
+  },
+  "logging": {
+    "directory": "logs",
+    "state": true,
+    "context": true,
+    "execution": true,
+    "report": true,
+    "reasoning": true
   }
 }

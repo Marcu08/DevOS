@@ -1,5 +1,5 @@
 {
-  "version": "0.9.5",
+  "version": "1.0.0",
   "name": "DevOS",
-  "description": "DECLARATIVE PIPELINE — modular agent with context, planner, executor, validator"
+  "description": "AI-powered development environment orchestration framework"
 }

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const { applyUnifiedDiff } = require("./utils/diff");
+const { applyDiff } = require("./patch-engine");
 const DEVOS = require("./config");
 const workspace = require("./workspace");
 
@@ -18,7 +18,7 @@ function applyPatch(filePath, diff) {
   let content = "";
   try { content = fs.readFileSync(full, "utf-8"); } catch {}
   backupFile(filePath);
-  const patched = applyUnifiedDiff(content, diff);
+  const patched = applyDiff(content, diff);
   fs.writeFileSync(full, patched);
 }
 
