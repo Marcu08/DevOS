@@ -1,5 +1,17 @@
 # DevOS Changelog
 
+## v0.9.5 — AI REASONING ENGINE (2026-07-05)
+
+- `agent/reasoning/` — modular reasoning pipeline: analyze → planner → confidence → reviewer
+- `agent/reasoning/analyze.js` — extracts affected files, priority, complexity from context
+- `agent/reasoning/planner.js` — generates structured plans with trace/modify/validate steps
+- `agent/reasoning/confidence.js` — confidence scoring, blocks execution if < 0.60 threshold
+- `agent/reasoning/reviewer.js` — self-review: detects risk, missing steps, high complexity
+- `agent/reasoning/index.js` — orchestrator: saves analysis.json, reasoning-plan.json, confidence.json, review.json
+- `agent/agent.js` — pipeline: context → reasoning → planner → executor → validator → decision
+
+**Salto:** `esecuzione diretta senza analisi` → `reasoning engine con analisi, confidence score, self-review e blocco sotto soglia`
+
 ## v0.9.4 — VALIDATOR ENGINE (2026-07-05)
 
 - `agent/validator/` — modular validators: syntax (`node --check`), node (`node index.js`), git (branch, clean, conflicts), lint (eslint)

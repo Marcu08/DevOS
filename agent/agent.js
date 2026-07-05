@@ -7,6 +7,7 @@ const planner = require("./planner");
 const executor = require("./executor");
 const validator = require("./validator");
 const validatorEngine = require("./validator/index");
+const reasoning = require("./reasoning/index");
 const state = require("./state");
 
 function initialize() {
@@ -29,11 +30,28 @@ function runContext() {
   return ctx;
 }
 
-function runPlanner(ctx) {
-  const plan = planner.buildPlan(state.getTask(), ctx);
-  planner.savePlan(plan, path.join(DEVOS.logs, "plan.json"));
-  state.update({ plan, status: "plan_ready" });
-  return plan;
+function runReasoning(ctx) {
+  const result = reasoning.reason(state.getTask(), ctx);
+
+  state.update({
+    reasoning: {
+      confidence: result.confidence?.confidence,
+      blocked: result.blocked,
+      steps: result.reasoningPlan?.steps?.length,
+      risk: result.reasoningPlan?.risk,
+    }
+  });
+
+  return result;
+}
+
+function runPlannerFromReasoning(reasoned) {
+  const reasonedPlan = reasoned.reasoningPlan;
+  if (reasonedPlan) {
+    planner.savePlan(reasonedPlan, path.join(DEVOS.logs, "plan.json"));
+    state.update({ plan: reasonedPlan, status: "plan_ready" });
+  }
+  return reasonedPlan;
 }
 
 function runValidator(ctx, plan) {
@@ -87,28 +105,29 @@ function decision(report) {
   return "ROLLBACK";
 }
 
-function executeDecision(decision, result) {
-  if (decision === "PASS" && result) {
+function executeDecision(dec, result) {
+  if (dec === "PASS" && result) {
     state.endExecution("completed");
-    console.log("[AGENT v0.9.4] ALL VALIDATORS PASSED — COMMITTED");
+    console.log("[AGENT v0.9.5] ALL VALIDATORS PASSED — COMMITTED");
     return;
   }
 
-  if (decision === "RETRY") {
-    console.log("[AGENT v0.9.4] VALIDATION FAILED — RETRYING");
+  if (dec === "RETRY") {
+    console.log("[AGENT v0.9.5] VALIDATION FAILED — RETRYING");
     workspace.rollback();
     const ctx = runContext();
-    const plan = runPlanner(ctx);
-    if (!runValidator(ctx, plan)) return;
+    const reasonedAgain = runReasoning(ctx);
+    if (reasonedAgain.blocked) { console.log("[AGENT v0.9.5] RETRY BLOCKED — confidence too low"); return; }
+    const planAgain = runPlannerFromReasoning(reasonedAgain);
+    if (!planAgain || !runValidator(ctx, planAgain)) return;
     const newResult = runExecutor(ctx);
     const newReport = runValidatorEngine(newResult);
-    const newDecision = decision(newReport);
-    executeDecision(newDecision, newResult);
+    executeDecision(decision(newReport), newResult);
     return;
   }
 
-  if (decision === "ROLLBACK") {
-    console.log("[AGENT v0.9.4] VALIDATION FAILED — ROLLBACK");
+  if (dec === "ROLLBACK") {
+    console.log("[AGENT v0.9.5] VALIDATION FAILED — ROLLBACK");
     workspace.rollback();
     state.endExecution("failed");
   }
@@ -117,8 +136,15 @@ function executeDecision(decision, result) {
 function main() {
   initialize();
   const ctx = runContext();
-  const plan = runPlanner(ctx);
 
+  const reasoned = runReasoning(ctx);
+  if (reasoned.blocked) {
+    console.log("[AGENT v0.9.5] REASONING BLOCKED — confidence too low or review failed");
+    state.endExecution("failed");
+    return;
+  }
+
+  const plan = runPlannerFromReasoning(reasoned);
   if (!runValidator(ctx, plan)) return;
 
   const result = runExecutor(ctx);
