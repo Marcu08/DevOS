@@ -1,5 +1,16 @@
 # DevOS Changelog
 
+## v0.9.3 — EXECUTION ENGINE (2026-07-05)
+
+- `state.js` — formal State Machine: Idle → Planning → Executing → Validating → Completed | Failed | Rollback
+- `executor.js` — Execution Engine with queue, per-step states, retry policies
+- `executor/` — plugin actions directory (applyPatch, validate, commit, rollback, runChecks)
+- `validator.js` — independent validation module (validatePlan, validatePR, validateContext)
+- `agent.js` — pipeline uses state.transition(), validator, executor.run()
+- `logs/execution.json` — structured execution log with step traces
+
+**Salto:** `esecuzione lineare con retry fisso` → `execution engine con state machine, coda, plugin e retry policy dichiarativa`
+
 ## v0.9.2 — DECLARATIVE PIPELINE (2026-07-05)
 
 - `agent.js` — rewritten as declarative pipeline: `main` → `initialize` → `runContext` → `runPlanner` → `runExecutor` → `runValidator` → `finish`
