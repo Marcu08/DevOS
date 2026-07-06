@@ -4,6 +4,27 @@ AI-powered development environment orchestration framework.
 
 Every decision is explainable, every modification is traceable, every error is reversible.
 
+## CLI Usage
+
+```powershell
+# Run the DevOS agent pipeline
+devos run "your task description"
+
+# Run environment health checks
+devos doctor
+
+# Validate the current workspace
+devos validate
+
+# Roll back to last clean state
+devos rollback
+
+# Show configuration
+devos config
+```
+
+The CLI is automatically added to your PowerShell profile (`Microsoft.PowerShell_profile.ps1`).
+
 ## Architecture
 
 ```
@@ -59,6 +80,7 @@ DevOS/
 │   ├── validator/            Syntax, node, git, lint validators + report builder
 │   ├── memory/               History, mistakes, patterns, solutions
 │   └── tools/                ESLint, npm, tests, doctor runners
+├── cli.js                    DevOS CLI entry point
 ├── config/                   Environment configuration
 ├── docs/                     Documentation
 ├── scripts/                  PowerShell automation
@@ -70,7 +92,7 @@ DevOS/
 
 ```powershell
 # Run the agent
-node agent/agent.js "your task description"
+devos run "your task description"
 ```
 
 The agent will: analyze context → reason about the task → plan execution → apply patches → validate changes → decide PASS/RETRY/ROLLBACK.
