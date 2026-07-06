@@ -87,7 +87,7 @@ States: `Idle → Planning → Executing → Validating → Completed | Failed |
 
 ```powershell
 # View current state
-cat logs/state.json | node -e "process.stdin.on('data',d=>{const s=JSON.parse(d);console.log('State:',s.machine,'Task:',s.task)})"
+node -e "const s=require('./logs/state.json');console.log('State:',s.machine,'Task:',s.task)"
 ```
 
 ---
@@ -278,6 +278,90 @@ powershell -ExecutionPolicy Bypass -File scripts/apply.ps1
 
 ---
 
+## PowerShell $PROFILE Commands
+
+These functions are defined in `$PROFILE` and available in every terminal session:
+
+### AI / Agent
+
+```powershell
+# Open opencode in current directory
+ai
+
+# Run opencode with a prompt
+ai "refactor the config module"
+
+# Analyze current project and open AI workflow
+dev-ai
+
+# Semi-auto agent: collects context then opens opencode
+agent "add error handling to database module"
+
+# Quick AI run with prompt
+agent-run "fix the login bug"
+```
+
+### Navigation
+
+```powershell
+# Fuzzy-find directory (recursive, excludes node_modules/.git)
+fzf-cd
+
+# Fuzzy-find file and copy path to clipboard
+ctrlp
+
+# Deep directory search with fzf + zoxide
+zz
+```
+
+### Git
+
+```powershell
+# Stage all and commit with message
+gcommit "fix: resolve login timeout"
+
+# Push current branch
+gp
+```
+
+### Project Info
+
+```powershell
+# Full context: location, git status, recent files + open in VS Code
+dev
+
+# Quick project overview: root, git status, branch, recent files
+proj
+```
+
+### Shortcuts
+
+```powershell
+c        # clear screen
+ll       # Get-ChildItem -Force (show all files)
+..       # Set-Location ..
+g        # open lazygit
+gitui    # open lazygit
+```
+
+### DevOS Agent (Node pipeline)
+
+```powershell
+# Full pipeline: Context → Reasoning → Planner → Executor → Validator → Decision
+node agent/agent.js "describe your task"
+
+# Default task: "analyze project"
+node agent/agent.js
+```
+
+### Load DevOS config manually
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/profile.ps1
+```
+
+---
+
 ## Quick Reference
 
 ```powershell
@@ -291,10 +375,10 @@ powershell -ExecutionPolicy Bypass -File scripts/doctor.ps1
 node -e "require('./agent/tools').run('doctor')"
 
 # View last execution report
-cat logs/report.json | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log('Success:',r.success,'Passed:',r.summary.passed,'Failed:',r.summary.failed)})"
+node -e "const r=require('./logs/report.json');console.log('Success:',r.success,'Passed:',r.summary.passed,'Failed:',r.summary.failed)"
 
 # View agent state
-cat logs/state.json | node -e "process.stdin.on('data',d=>{console.log(JSON.parse(d).machine)})"
+node -e "const s=require('./logs/state.json');console.log('State:',s.machine,'Task:',s.task)"
 
 # View memory stats
 node -e "console.log(require('./agent/memory').getStats().history)"

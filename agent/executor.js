@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const DEVOS = require("./config");
 const state = require("./state");
+const ai = require("./ai/index");
 
 const ACTIONS_DIR = __dirname + "/executor";
 
@@ -13,19 +14,9 @@ function loadAction(name) {
   }
 }
 
-function generatePR(task, ctx) {
-  const target = ctx.topFiles[0] || { file: "/index.js" };
-
-  return {
-    title: `AI: ${task}`,
-    summary: "AI real diff proposal",
-    risk: "unknown",
-    files: [{
-      path: target.file,
-      patch: `@@ -1,3 +1,3 @@\n-old line\n+new line (${task})`,
-      reason: `Modified for task: ${task}`
-    }]
-  };
+function generatePR(task, ctx, errors) {
+  const result = ai.generatePatch(task, ctx, errors);
+  return result;
 }
 
 function buildQueue(task, pr) {
@@ -66,9 +57,9 @@ function run(plan) {
     step.started = new Date().toISOString();
     step.status = "running";
     state.updateStep(step.id, { status: "running", started: step.started });
-    state.transition("Executing");
+      if (state.getMachine() !== "Executing") state.transition("Executing");
 
-    const action = loadAction(def.action);
+      const action = loadAction(def.action);
 
     if (!action) {
       step.status = "failed";

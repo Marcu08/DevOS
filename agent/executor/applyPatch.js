@@ -7,6 +7,10 @@ function run(step, context) {
   }
 
   for (const file of pr.files) {
+    if (file._skipApply) {
+      console.log(`[PATCH] ${file.path} (already applied by AI — skipping)`);
+      continue;
+    }
     console.log(`[PATCH] ${file.path}`);
     try {
       patch.applyPatch(file.path, file.patch);

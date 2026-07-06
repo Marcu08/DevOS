@@ -70,8 +70,8 @@ function runValidator(ctx, plan) {
   return true;
 }
 
-function runExecutor(ctx) {
-  const pr = executor.generatePR(state.getTask(), ctx);
+function runExecutor(ctx, errors) {
+  const pr = executor.generatePR(state.getTask(), ctx, errors);
   const prResult = validator.validatePR(pr);
   if (!prResult.valid) {
     state.update({ status: "invalid_pr", errors: prResult.errors });
@@ -158,7 +158,8 @@ function executeHealing(report, result) {
   const plan = runPlannerFromReasoning(reasoned);
   if (!runValidator(ctx, plan)) return false;
 
-  const newResult = runExecutor(ctx);
+  const healingErrors = report?.validators?.filter(v => v.status === "failed").map(v => ({ name: v.name, error: v.error })) || [];
+  const newResult = runExecutor(ctx, healingErrors);
   const newReport = runValidatorEngine(newResult);
   return executeHealing(newReport, newResult);
 }

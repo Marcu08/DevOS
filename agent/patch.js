@@ -4,6 +4,7 @@ const { execSync } = require("child_process");
 const { applyDiff } = require("./patch-engine");
 const DEVOS = require("./config");
 const workspace = require("./workspace");
+const ai = require("./ai/index");
 
 function backupFile(filePath) {
   const src = path.join(DEVOS.workspace, filePath);
@@ -62,13 +63,21 @@ function selfHeal(taskName, pr, state, maxRetries = 3) {
     state.update({ lastError: check.error?.slice(0, 200), status: "retrying" });
     workspace.rollback();
 
-    current = {
-      ...current,
-      files: current.files.map(f => ({
-        ...f,
-        patch: f.patch + `\n// retry ${i + 1}\n// error: ${check.error?.slice(0, 120)}`
-      }))
-    };
+    const error = check.error?.slice(0, 300) || "Unknown error";
+    const ctx = { topFiles: current.files.map(f => ({ file: f.path })) };
+    const newPr = ai.generatePatch(taskName + ` (retry ${i + 1})`, ctx, [{ name: "runChecks", error }]);
+
+    if (newPr && newPr.files && newPr.files.length > 0) {
+      current = newPr;
+    } else {
+      current = {
+        ...current,
+        files: current.files.map(f => ({
+          ...f,
+          patch: f.patch + `\n// retry ${i + 1}\n// error: ${error?.slice(0, 120)}`
+        }))
+      };
+    }
   }
 
   return null;

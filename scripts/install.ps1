@@ -1,4 +1,5 @@
-. $PSScriptRoot\lib.ps1
+﻿. $PSScriptRoot\lib.ps1
+$ErrorActionPreference = "Stop"
 
 Write-Host "================================"
 Write-Host "        DEVOS INSTALLER"
@@ -8,23 +9,23 @@ function Install($name, $cmd) {
     Write-Host ""
     Write-Host "→ Installing $name"
     try {
-        Invoke-Expression $cmd
-        Write-Host "✔ $name done"
+        $output = Invoke-Expression $cmd 2>&1
+        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+            Write-Host "✖ $name failed (exit code: $LASTEXITCODE)"
+        } else {
+            Write-Host "✔ $name done"
+        }
     } catch {
-        Write-Host "✖ failed: $name"
+        Write-Host "✖ $name failed: $_"
     }
 }
 
-# =========================
-# CORE TOOLS
-# =========================
-
-Install "Git" "winget install --id Git.Git -e"
-Install "Node.js" "winget install OpenJS.NodeJS"
-Install "WezTerm" "winget install wez.wezterm"
-Install "Starship" "winget install Starship.Starship"
-Install "zoxide" "winget install ajeetdsouza.zoxide"
-Install "fzf" "winget install junegunn.fzf"
+Install "Git" "winget install --id Git.Git -e 2>&1"
+Install "Node.js" "winget install OpenJS.NodeJS 2>&1"
+Install "WezTerm" "winget install wez.wezterm 2>&1"
+Install "Starship" "winget install Starship.Starship 2>&1"
+Install "zoxide" "winget install ajeetdsouza.zoxide 2>&1"
+Install "fzf" "winget install junegunn.fzf 2>&1"
 
 Write-Host ""
 Write-Host "================================"

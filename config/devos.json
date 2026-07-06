@@ -1,10 +1,15 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "DevOS",
   "root": "C:\\DevOs",
-  "workspace": "C:\\Users\\marzu\\OneDrive\\Desktop",
+  "workspace": "C:\\DevOs\\workspace",
   "editor": "code",
-  "ai": "opencode",
+  "ai": {
+    "provider": "opencode",
+    "opencode": { "enabled": true },
+    "direct": { "enabled": true },
+    "fallback": { "enabled": true }
+  },
   "safeMode": true,
   "validator": {
     "syntax": true,
