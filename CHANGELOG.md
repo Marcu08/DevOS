@@ -1,5 +1,47 @@
 # DevOS Changelog
 
+## v1.3.0 — PROFESSIONAL PLATFORM (2026-07-13)
+
+### CLI Experience
+- `agent/cli/` — new modular CLI system with colored output, progress indicators, tables
+- `agent/cli/output.js` — ANSI color utilities, icons, banners, status lines
+- `agent/cli/commands/` — 10 commands: run, doctor, validate, rollback, config, help, history, memory, explain, plugins, dashboard
+- `cli.js` — reduced to 9-line thin wrapper
+
+### Demo Workflow
+- `examples/simple-web-project/` — 3-page HTML website for dark-mode demo
+- `examples/run-demo.sh` — demo runner script
+- `docs/demo.md` — full workflow documentation with architecture diagram
+
+### Enhanced Memory Engine
+- `agent/memory/search.js` — cross-store search (by task, error, file)
+- `agent/memory/similarity.js` — token-based similarity scoring for task/mistake/solution matching
+- `agent/memory/recommend.js` — recommendation engine with warnings and suggestions based on past failures
+- Pipeline healing loop now logs memory recommendations
+
+### Plugin System
+- `plugins/index.js` — extensible plugin loader with auto-detection, tool discovery, project rules
+- `plugins/javascript.js` — JavaScript project plugin
+- `plugins/python.js` — Python project plugin
+- `plugins/react.js` — React project plugin
+- `plugins/docker.js` — Docker project plugin
+- Integrated into pipeline context builder
+
+### Local Web Dashboard
+- `dashboard/server.js` — lightweight Node HTTP server with JSON API
+- `dashboard/index.html` — responsive dark-themed dashboard with auto-refresh
+- Shows: agent state, validation results, memory stats, execution steps, history
+- Command: `node cli.js dashboard` → `localhost:3000`
+
+### Testing System
+- `tests/runner.js` — automated test runner with discovery, ANSI output, timing
+- 7 test suites, 108 tests, 100% passing rate
+- Coverage: patch engine, state machine, memory, plugins, CLI, similarity, config
+
+### Documentation
+- README completely rewritten: architecture diagram, commands table, engines, plugin development
+- Updated CHANGELOG with all v1.3.0 changes
+
 ## v1.2.9 — BOTTOM-UP HUNK APPLICATION (2026-07-13)
 
 - `patch-engine/applier.js` — hunks applied in reverse order (bottom-up) so earlier changes don't invalidate later line numbers
