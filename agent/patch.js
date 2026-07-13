@@ -3,8 +3,6 @@ const path = require("path");
 const { execSync } = require("child_process");
 const { applyDiff } = require("./patch-engine");
 const DEVOS = require("./config");
-const workspace = require("./workspace");
-const ai = require("./ai/index");
 
 function backupFile(filePath) {
   const src = path.join(DEVOS.workspace, filePath);
@@ -44,43 +42,4 @@ function validatePR(pr) {
   return pr.files.every(f => f.path && f.patch && f.reason);
 }
 
-function selfHeal(taskName, pr, state, maxRetries = 3) {
-  let current = pr;
-  const branch = workspace.createAgentBranch(taskName);
-  workspace.snapshot(taskName);
-
-  for (let i = 0; i < maxRetries; i++) {
-    console.log(`[LOOP] Attempt ${i + 1}`);
-    applyPatches(current);
-    const check = runChecks();
-
-    if (check.ok) {
-      console.log("[LOOP] SUCCESS");
-      return { pr: current, branch };
-    }
-
-    console.log("[LOOP] FAILED → rollback");
-    state.update({ lastError: check.error?.slice(0, 200), status: "retrying" });
-    workspace.rollback();
-
-    const error = check.error?.slice(0, 300) || "Unknown error";
-    const ctx = { topFiles: current.files.map(f => ({ file: f.path })) };
-    const newPr = ai.generatePatch(taskName + ` (retry ${i + 1})`, ctx, [{ name: "runChecks", error }]);
-
-    if (newPr && newPr.files && newPr.files.length > 0) {
-      current = newPr;
-    } else {
-      current = {
-        ...current,
-        files: current.files.map(f => ({
-          ...f,
-          patch: f.patch + `\n// retry ${i + 1}\n// error: ${error?.slice(0, 120)}`
-        }))
-      };
-    }
-  }
-
-  return null;
-}
-
-module.exports = { backupFile, applyPatch, applyPatches, runChecks, validatePR, selfHeal };
+module.exports = { backupFile, applyPatch, applyPatches, runChecks, validatePR };
