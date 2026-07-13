@@ -43,11 +43,18 @@ function heal(report, result) {
   for (const v of failed) {
     memory.recordMistake(state.getTask(), `${v.name}: ${v.error?.slice(0, 100)}`, { stage: "validation" });
   }
-  memory.learnFromFailure(
+  const failureResult = memory.learnFromFailure(
     state.getTask(),
     failed.map(v => `${v.name}: ${v.error}`).join("; "),
     { file: "validation" }
   );
+
+  if (failureResult.warnings && failureResult.warnings.length > 0) {
+    for (const w of failureResult.warnings) log.warn(w, "MEMORY");
+  }
+  if (failureResult.suggestions && failureResult.suggestions.length > 0) {
+    for (const s of failureResult.suggestions) log.info(s, "MEMORY");
+  }
 
   log.info(`HEALING ATTEMPT ${execution.healingCount()}/${execution.MAX_HEALING_RETRIES}`, "AGENT");
 
