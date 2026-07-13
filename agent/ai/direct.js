@@ -1,7 +1,29 @@
-const path = require("path");
-const fs = require("fs");
-const { execSync } = require("child_process");
-const DEVOS = require("../config");
+const { execFileSync } = require("child_process");
+
+const REQUEST_HELPER = require("path").join(__dirname, "request-helper.js");
+
+function apiRequest(endpoint, body) {
+  try {
+    const out = execFileSync("node", [REQUEST_HELPER], {
+      encoding: "utf-8",
+      timeout: 120000,
+      maxBuffer: 10 * 1024 * 1024,
+      windowsHide: true,
+      env: {
+        ...process.env,
+        DEVOS_AI_HOST: endpoint.hostname,
+        DEVOS_AI_PATH: endpoint.path,
+        DEVOS_AI_AUTH: endpoint.authHeader,
+        DEVOS_AI_VER: endpoint.versionHeader || "",
+        DEVOS_AI_KEY: endpoint.apiKey,
+        DEVOS_AI_BODY: body,
+      },
+    });
+    return JSON.parse(out);
+  } catch {
+    return null;
+  }
+}
 
 function callAnthropic(prompt) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -14,13 +36,14 @@ function callAnthropic(prompt) {
   });
 
   try {
-    const { execSync } = require("child_process");
-    const out = execSync(
-      `curl -s https://api.anthropic.com/v1/messages -H "x-api-key: ${apiKey}" -H "anthropic-version: 2023-06-01" -H "content-type: application/json" -d '${body.replace(/'/g, "'\\''")}'`,
-      { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024, timeout: 120000 }
-    );
-
-    const data = JSON.parse(out);
+    const data = apiRequest({
+      hostname: "api.anthropic.com",
+      path: "/v1/messages",
+      apiKey,
+      authHeader: "x-api-key",
+      versionHeader: "anthropic-version:2023-06-01",
+    }, body);
+    if (!data) return null;
     const text = data?.content?.[0]?.text || "";
     return parseOutput(text);
   } catch {
@@ -39,12 +62,14 @@ function callOpenAI(prompt) {
   });
 
   try {
-    const out = execSync(
-      `curl -s https://api.openai.com/v1/chat/completions -H "Authorization: Bearer ${apiKey}" -H "content-type: application/json" -d '${body.replace(/'/g, "'\\''")}'`,
-      { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024, timeout: 120000 }
-    );
-
-    const data = JSON.parse(out);
+    const data = apiRequest({
+      hostname: "api.openai.com",
+      path: "/v1/chat/completions",
+      apiKey,
+      authHeader: "Authorization",
+      versionHeader: "",
+    }, body);
+    if (!data) return null;
     const text = data?.choices?.[0]?.message?.content || "";
     return parseOutput(text);
   } catch {
