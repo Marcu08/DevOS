@@ -4,9 +4,10 @@ function apply(content, diff) {
   const hunks = parse(diff);
   if (hunks.length === 0) return content;
 
-  let lines = content.split("\n");
+  let lines = content ? content.split("\n") : [];
 
-  for (const hunk of hunks) {
+  for (let i = hunks.length - 1; i >= 0; i--) {
+    const hunk = hunks[i];
     const ctxBefore = [];
     const removed = [];
     const added = [];
@@ -24,6 +25,11 @@ function apply(content, diff) {
       }
     }
 
+    if (hunk.oldStart === 0) {
+      lines = [...lines, ...added];
+      continue;
+    }
+
     const expectedPos = hunk.oldStart - 1;
     const actualPos = findHunkPosition(lines, expectedPos, ctxBefore, removed);
     if (actualPos === -1) {
@@ -31,8 +37,8 @@ function apply(content, diff) {
       continue;
     }
 
-    const before = lines.slice(0, actualPos);
-    const after = lines.slice(actualPos + removed.length);
+    const before = lines.slice(0, actualPos + ctxBefore.length);
+    const after = lines.slice(actualPos + ctxBefore.length + removed.length);
 
     lines = [...before, ...added, ...after];
   }
