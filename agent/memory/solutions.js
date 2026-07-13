@@ -56,4 +56,4 @@ function findSimilar(task) {
         .slice(0, 3);
 }
 
-module.exports = { cache, recall, findSimilar };
+module.exports = { cache, recall, findSimilar, load };

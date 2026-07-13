@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOS Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+  h1 { color: #58a6ff; font-size: 1.5rem; margin-bottom: 20px; }
+  h2 { color: #8b949e; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .card h2 { margin-bottom: 12px; }
+  .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.9rem; }
+  .label { color: #8b949e; }
+  .value { color: #c9d1d9; font-weight: 500; }
+  .value.ok { color: #3fb950; }
+  .value.fail { color: #f85149; }
+  .value.warn { color: #d29922; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+  .badge.ok { background: #1b4124; color: #3fb950; }
+  .badge.fail { background: #49242a; color: #f85149; }
+  .badge.warn { background: #493e1b; color: #d29922; }
+  .badge.idle { background: #1c2128; color: #8b949e; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; color: #8b949e; font-weight: 500; padding: 6px 4px; border-bottom: 1px solid #30363d; }
+  td { padding: 6px 4px; border-bottom: 1px solid #21262d; }
+  .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #1c2128; margin-top: 8px; }
+  .bar-fill { transition: width 0.3s; }
+  .bar-fill.ok { background: #3fb950; }
+  .bar-fill.fail { background: #f85149; }
+  .bar-fill.skip { background: #484f58; }
+  .auto-refresh { color: #484f58; font-size: 0.8rem; margin-top: 16px; text-align: center; }
+  pre { font-size: 0.8rem; color: #8b949e; overflow-x: auto; white-space: pre-wrap; max-height: 200px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>◈ DevOS Dashboard</h1>
+
+<div class="grid">
+  <div class="card">
+    <h2>Agent State</h2>
+    <div id="state-content">
+      <div class="row"><span class="label">Machine</span><span class="value" id="machine">—</span></div>
+      <div class="row"><span class="label">Task</span><span class="value" id="task">—</span></div>
+      <div class="row"><span class="label">Branch</span><span class="value" id="branch">—</span></div>
+      <div class="row"><span class="label">Confidence</span><span class="value" id="confidence">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Validation</h2>
+    <div id="validation-content">
+      <div class="row"><span class="label">Passed</span><span class="value ok" id="v-passed">0</span></div>
+      <div class="row"><span class="label">Failed</span><span class="value" id="v-failed">0</span></div>
+      <div class="row"><span class="label">Skipped</span><span class="value" id="v-skipped">0</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Memory</h2>
+    <div id="memory-content">
+      <div class="row"><span class="label">Total runs</span><span class="value" id="m-total">0</span></div>
+      <div class="row"><span class="label">Success rate</span><span class="value" id="m-rate">—</span></div>
+      <div class="row"><span class="label">Mistakes</span><span class="value" id="m-mistakes">0</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Last Execution</h2>
+    <div id="execution-content"><pre>No execution data</pre></div>
+  </div>
+
+  <div class="card">
+    <h2>Recent History</h2>
+    <div id="history-content"><pre>No history</pre></div>
+  </div>
+</div>
+
+<div class="auto-refresh">Auto-refreshing every 5s</div>
+
+<script>
+function statusBadge(s) {
+  const map = { completed: 'ok', failed: 'fail', running: 'warn', Idle: 'idle', Planning: 'warn', Executing: 'warn', Validating: 'warn' };
+  return `<span class="badge ${map[s] || 'idle'}">${s}</span>`;
+}
+
+async function refresh() {
+  try {
+    const res = await fetch('/api');
+    const d = await res.json();
+
+    // State
+    document.getElementById('machine').innerHTML = statusBadge(d.state?.machine || '—');
+    document.getElementById('task').textContent = (d.state?.task || '—').slice(0, 50);
+    document.getElementById('branch').textContent = d.state?.branch || '—';
+    const conf = d.confidence;
+    document.getElementById('confidence').textContent = conf ? `${Math.round(conf.confidence * 100)}%` : '—';
+
+    // Validation
+    const rpt = d.report;
+    if (rpt && rpt.summary) {
+      document.getElementById('v-passed').textContent = rpt.summary.passed;
+      document.getElementById('v-failed').textContent = rpt.summary.failed;
+      document.getElementById('v-skipped').textContent = rpt.summary.skipped;
+    }
+
+    // Memory
+    const hist = d.history;
+    if (hist && hist.runs) {
+      document.getElementById('m-total').textContent = hist.runs.length;
+      const succeeded = hist.runs.filter(r => r.status === 'completed').length;
+      const rate = hist.runs.length > 0 ? Math.round(succeeded / hist.runs.length * 100) + '%' : '—';
+      document.getElementById('m-rate').textContent = rate;
+    }
+    const mistakes = d.mistakes;
+    if (mistakes) {
+      document.getElementById('m-mistakes').textContent = (mistakes.mistakes || []).length;
+    }
+
+    // Execution
+    const exec = d.execution;
+    if (exec && exec.steps) {
+      let html = '';
+      for (const s of exec.steps) {
+        html += `<div class="row"><span class="label">${s.action || s.label}</span><span class="value ${s.status === 'completed' ? 'ok' : s.status === 'failed' ? 'fail' : ''}">${s.status}</span></div>`;
+      }
+      document.getElementById('execution-content').innerHTML = html || '<pre>No execution data</pre>';
+    }
+
+    // History
+    if (hist && hist.runs && hist.runs.length > 0) {
+      const recent = hist.runs.slice(-5).reverse();
+      let html = '<table><tr><th>#</th><th>Task</th><th>Status</th></tr>';
+      for (const r of recent) {
+        html += `<tr><td>${r.id}</td><td>${(r.task || '').slice(0, 30)}</td><td>${statusBadge(r.status)}</td></tr>`;
+      }
+      html += '</table>';
+      document.getElementById('history-content').innerHTML = html;
+    }
+  } catch (e) {
+    console.error('Dashboard refresh error:', e);
+  }
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

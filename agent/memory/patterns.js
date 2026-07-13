@@ -48,4 +48,4 @@ function suggest(filePattern) {
     .slice(0, 3);
 }
 
-module.exports = { record, suggest };
+module.exports = { record, suggest, load };

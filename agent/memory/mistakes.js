@@ -42,4 +42,4 @@ function similarTo(error) {
   return data.mistakes.filter(m => m.error.toLowerCase().includes(key));
 }
 
-module.exports = { record, recentErrors, similarTo };
+module.exports = { record, recentErrors, similarTo, load };
