@@ -1,4 +1,4 @@
-gemini.google.com# DevOS v1.0
+# DevOS v1.2.9
 
 AI-powered development environment orchestration framework.
 
@@ -8,22 +8,23 @@ Every decision is explainable, every modification is traceable, every error is r
 
 ```powershell
 # Run the DevOS agent pipeline
-devos run "your task description"
+node cli.js run "your task description"
 
 # Run environment health checks
-devos doctor
+node cli.js doctor
 
 # Validate the current workspace
-devos validate
+node cli.js validate
 
 # Roll back to last clean state
-devos rollback
+node cli.js rollback
 
 # Show configuration
-devos config
-```
+node cli.js config
 
-The CLI is automatically added to your PowerShell profile (`Microsoft.PowerShell_profile.ps1`).
+# Show help
+node cli.js help
+```
 
 ## Architecture
 
@@ -48,15 +49,15 @@ MEMORY ENGINE            history | mistakes | patterns | solutions
 
 ## Engines
 
-| Engine | Location | Responsibility |
-|---|---|---|
+ | Engine | Location | Responsibility |
+|---|---|---|---|
 | Context | `agent/context.js` | Scan repo, rank files, build dependency graph, detect exports |
 | Reasoning | `agent/reasoning/` | Analyze task, plan steps, score confidence, self-review |
-| Planner | `agent/planner.js` | Build execution plan from reasoned analysis |
+| Planner | `agent/reasoning/planner.js` | Build execution plan from reasoned analysis |
 | Executor | `agent/executor/` | Validate PR, apply patches via unified diff, git commit |
-| Patch Engine | `agent/patch-engine/` | Parse, apply, and generate unified diffs with context |
+| Patch Engine | `agent/patch-engine/` | Parse, apply, and generate unified diffs with context matching |
 | Validator | `agent/validator/` | Syntax check (`node --check`), node run, git status, lint |
-| Decision | `agent/agent.js` | PASS / RETRY / ROLLBACK based on validator report |
+| Decision | `agent/pipeline/healing.js` | PASS / RETRY / ROLLBACK based on validator report |
 | State Machine | `agent/state.js` | Idle → Planning → Executing → Validating → Completed / Failed / Rollback |
 | Tools | `agent/tools/` | Run eslint, npm, tests, doctor checks |
 | Memory | `agent/memory/` | History, mistakes, patterns, solution caching |
@@ -66,24 +67,25 @@ MEMORY ENGINE            history | mistakes | patterns | solutions
 ```
 DevOS/
 ├── agent/
-│   ├── agent.js              Pipeline orchestrator
+│   ├── agent.js              [DEPRECATED — use agent/pipeline/]
 │   ├── config.js             Configuration loader (DEVOS.* API)
 │   ├── context.js            Context engine
-│   ├── planner.js            Plan builder
 │   ├── executor.js           Execution engine with queue
-│   ├── patch.js              Low-level patch utilities
+│   ├── patch.js              Patch utilities (backup, apply, validate)
 │   ├── state.js              Formal state machine
-│   ├── validator.js          PR/plan validators
+│   ├── validator.js          PR/plan validators (legacy)
+│   ├── ai/                   AI providers (opencode, direct, fallback + request-helper)
 │   ├── executor/             Plugin actions (applyPatch, validate, commit, rollback)
-│   ├── patch-engine/         Unified diff parser, applier, generator
-│   ├── reasoning/            Analyze, planner, confidence, reviewer
+│   ├── patch-engine/         Unified diff parser, applier (context-matched), generator
+│   ├── pipeline/             Orchestration pipeline (context → reasoning → exec → validate → heal)
+│   ├── reasoning/            Analyze, planner, confidence (config-driven), reviewer
 │   ├── validator/            Syntax, node, git, lint validators + report builder
 │   ├── memory/               History, mistakes, patterns, solutions
 │   └── tools/                ESLint, npm, tests, doctor runners
 ├── cli.js                    DevOS CLI entry point
 ├── config/                   Environment configuration
 ├── docs/                     Documentation
-├── scripts/                  PowerShell automation
+├── scripts/                  PowerShell helpers (doctor, backup, restore, install)
 ├── logs/                     JSON logs (context, plan, execution, report, reasoning, memory)
 └── workspace/                Git-managed working copy (agent uses this)
 ```
@@ -104,8 +106,10 @@ All settings in `config/devos.json`:
 - `validator` — enable/disable syntax, git, lint, node checks
 - `tools` — enable npm, eslint, test runners
 - `memory` — history/persistence limits
-- `reasoning` — confidence threshold, max healing retries
+- `reasoning` — `confidenceThreshold` (read by confidence engine), `maxHealingRetries`
 - `logging` — which JSON logs to produce
+
+> **v1.2.5+:** `confidenceThreshold` is now read from config instead of hardcoded at 0.60.
 
 ## Logs
 
@@ -120,6 +124,11 @@ All settings in `config/devos.json`:
 | `logs/report.json` | Validator report |
 | `logs/state.json` | State machine transitions |
 | `logs/memory-*.json` | History, mistakes, patterns, solutions |
+
+## Security
+
+- **v1.2.4+:** API keys for AI providers (Anthropic, OpenAI) are passed via environment variables to isolated Node child processes. Never appear in command-line arguments or process listings. No shell injection vectors in `direct.js`.
+- Patch engine validates context lines before applying hunks to prevent file corruption from stale diffs.
 
 ## Requirements
 

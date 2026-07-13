@@ -1,5 +1,54 @@
 # DevOS Changelog
 
+## v1.2.9 — BOTTOM-UP HUNK APPLICATION (2026-07-13)
+
+- `patch-engine/applier.js` — hunks applied in reverse order (bottom-up) so earlier changes don't invalidate later line numbers
+- `patch-engine/applier.js` — fixed oldStart=0 (new file) edge case: appends instead of overwriting
+- `patch-engine/applier.js` — fixed splice offset to include ctxBefore in before slice
+
+## v1.2.8 — LEGACY CODE REMOVAL (2026-07-13)
+
+- `agent/patch.js` — removed `selfHeal()` (legacy healing loop, never called from new pipeline)
+- `agent/patch.js` — cleaned orphan imports (`ai`, `workspace`)
+
+## v1.2.7 — DEAD CODE CLEANUP (2026-07-13)
+
+- Removed 6 dead v0.6 PowerShell scripts (`ai.ps1`, `review.ps1`, `apply.ps1`, `context.ps1`, `apply-pr.ps1`, `review-pr.ps1`)
+- Removed 4 empty doc placeholders (`AI.md`, `Git.md`, `PowerShell.md`, `Terminal.md`)
+
+## v1.2.6 — OPENCODE PARAMETER FIX (2026-07-13)
+
+- `agent/ai/index.js` — `opencode.run()` now receives `task` as second argument (was `undefined`, causing broken PR titles)
+
+## v1.2.5 — CONFIG-DRIVEN CONFIDENCE (2026-07-13)
+
+- `agent/reasoning/confidence.js` — threshold now read from `config/devos.json → reasoning.confidenceThreshold` instead of hardcoded `0.60`
+- Falls back to `0.6` if not configured
+
+## v1.2.4 — AI PROVIDER SECURITY (2026-07-13)
+
+- `agent/ai/direct.js` — replaced `curl` via `execSync` (shell injection risk, API key visible in `ps`) with isolated Node child process
+- `agent/ai/request-helper.js` — new HTTPS request helper executed via `execFileSync`; API key passed via `DEVOS_AI_KEY` env var, never in command line
+- No shell injection, no credential exposure in process listings
+
+## v1.2.3 — STEP TYPE PROPAGATION (2026-07-13)
+
+- `agent/state.js` — `addStep()` now copies `type` from `stepDef` to the step object
+- `agent/executor/validate.js` — was receiving `step.type === undefined` because `type` was not propagated; PR validation was effectively a no-op
+
+## v1.2.2 — DEPRECATE SELF-EXECUTING AGENT (2026-07-13)
+
+- `agent/agent.js` — removed `main()` auto-execution at module scope
+- Now only runs when `require.main === module` (direct execution)
+- Exported functions (`main`, `initialize`, `runContext`, `runReasoning`, etc.) for backwards compatibility
+
+## v1.2.1 — PATCH ENGINE CONTEXT MATCHING (2026-07-13)
+
+- `patch-engine/applier.js` — `apply()` now validates context lines before splicing hunks
+- New `findHunkPosition()` — verifies `ctxBefore` + `removed` lines match at expected position (with ±5 line window)
+- Stale hunks (context mismatch) are skipped instead of corrupting the file
+- Previously the applier blindly spliced at `hunk.oldStart - 1` regardless of file state
+
 ## v1.0.0 — STABILIZATION (2026-07-05)
 
 - Final architecture: Context → Reasoning → Planner → Executor → Validator → Decision → Memory

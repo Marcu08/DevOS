@@ -184,6 +184,9 @@ All pipeline logs are written as JSON to `logs/`:
 | `logs/memory-mistakes.json` | Tracked failures and errors |
 | `logs/memory-patterns.json` | Success patterns per file |
 | `logs/memory-solutions.json` | Cached solutions |
+| `logs/ai_prompt.txt` | Last AI prompt sent to provider |
+| `logs/ai_result.json` | Last AI provider result (patch/PR) |
+| `logs/ai_output.txt` | Raw AI provider stdout (if any) |
 
 ---
 
@@ -250,6 +253,11 @@ console.log('Suggestions:', result.suggestedPatterns.length);
 ---
 
 ## Patch Engine
+
+Features (v1.2.x):
+- **Context matching:** hunks are validated against file content before applying. If context lines don't match, the hunk is skipped instead of corrupting the file.
+- **Bottom-up application:** multiple hunks are applied in reverse order so earlier changes don't invalidate later line numbers.
+- **Window search:** hunks search ±5 lines from the expected position for matching context.
 
 ### Generate a diff between two files
 ```powershell
@@ -346,14 +354,9 @@ powershell -ExecutionPolicy Bypass -File scripts/restore.ps1
 
 # Load profile
 powershell -ExecutionPolicy Bypass -File scripts/profile.ps1
-
-# AI loop (legacy v0.6)
-powershell -ExecutionPolicy Bypass -File scripts/ai.ps1
-
-# Review and apply patches (legacy)
-powershell -ExecutionPolicy Bypass -File scripts/review.ps1
-powershell -ExecutionPolicy Bypass -File scripts/apply.ps1
 ```
+
+> **v1.2.7:** Removed legacy v0.6 scripts (`ai.ps1`, `apply.ps1`, `context.ps1`, `review.ps1`, `apply-pr.ps1`, `review-pr.ps1`). Use the Node.js CLI instead.
 
 ---
 
