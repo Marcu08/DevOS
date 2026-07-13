@@ -1,4 +1,4 @@
-# DevOS v1.0
+gemini.google.com# DevOS v1.0
 
 AI-powered development environment orchestration framework.
 

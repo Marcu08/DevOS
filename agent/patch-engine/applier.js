@@ -7,10 +7,9 @@ function apply(content, diff) {
   let lines = content.split("\n");
 
   for (const hunk of hunks) {
+    const ctxBefore = [];
     const removed = [];
     const added = [];
-    const ctxBefore = [];
-    const ctxAfter = [];
     let sawChange = false;
 
     for (const l of hunk.lines) {
@@ -21,20 +20,61 @@ function apply(content, diff) {
         sawChange = true;
         added.push(l.slice(1));
       } else if (l.startsWith(" ")) {
-        if (sawChange) ctxAfter.push(l.slice(1));
-        else ctxBefore.push(l.slice(1));
+        if (!sawChange) ctxBefore.push(l.slice(1));
       }
     }
 
-    const pos = hunk.oldStart - 1;
+    const expectedPos = hunk.oldStart - 1;
+    const actualPos = findHunkPosition(lines, expectedPos, ctxBefore, removed);
+    if (actualPos === -1) {
+      console.log(`[PATCH] Skipping hunk at line ${hunk.oldStart}: context mismatch`);
+      continue;
+    }
 
-    const before = lines.slice(0, pos);
-    const after = lines.slice(pos + removed.length);
+    const before = lines.slice(0, actualPos);
+    const after = lines.slice(actualPos + removed.length);
 
     lines = [...before, ...added, ...after];
   }
 
   return lines.join("\n");
+}
+
+function findHunkPosition(lines, expectedPos, ctxBefore, removed) {
+  if (ctxBefore.length === 0 && removed.length === 0) {
+    return expectedPos;
+  }
+
+  for (let offset = 0; offset < 5; offset++) {
+    for (const sign of [1, -1]) {
+      const startPos = expectedPos + sign * offset;
+      if (startPos < 0) continue;
+
+      const segmentLen = ctxBefore.length + removed.length;
+      if (startPos + segmentLen > lines.length) continue;
+
+      let match = true;
+
+      for (let i = 0; i < ctxBefore.length; i++) {
+        if (lines[startPos + i] !== ctxBefore[i]) {
+          match = false;
+          break;
+        }
+      }
+      if (!match) continue;
+
+      for (let i = 0; i < removed.length; i++) {
+        if (lines[startPos + ctxBefore.length + i] !== removed[i]) {
+          match = false;
+          break;
+        }
+      }
+
+      if (match) return startPos;
+    }
+  }
+
+  return -1;
 }
 
 module.exports = { apply };

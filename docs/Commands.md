@@ -1,107 +1,211 @@
 # DevOS — Command Reference
 
-## Agent Pipeline
+## CLI Usage
 
-### Run the agent
-```powershell
-node agent/agent.js "describe your task"
-```
-Runs the full pipeline: Context → Reasoning → Planner → Executor → Validator → Decision.
+All DevOS commands are run via the `cli.js` entry point:
 
 ```powershell
-node agent/agent.js
-```
-Default task: `analyze project`.
-
-### Run with custom task
-```powershell
-node agent/agent.js "refactor config module"
-node agent/agent.js "add error handling to executor"
-node agent/agent.js "improve test coverage"
+node cli.js <command> [args]
 ```
 
 ---
 
-## Tools Engine
+## Available Commands
 
-Run standalone tools without the full pipeline:
+### `node cli.js run` — Run the agent pipeline
 
-### Doctor (environment health check)
 ```powershell
-node -e "require('./agent/tools').run('doctor')"
+node cli.js run "refactor config module"
+node cli.js run "add error handling to executor"
+node cli.js run "improve test coverage"
+node cli.js run                # default task: "analyze project"
 ```
+
+Example output:
+```
+═══════════════════════════════════════════
+ Task: refactor config module
+═══════════════════════════════════════════
+   ◐ Planning...
+   ◐ Executing...
+   ◐ Validating...
+   ◐ Completed...
+
+   ✓ Planning    done
+   ✓ Executing   done
+   ✓ Validating  done
+   ✓ Completed   done
+```
+
+---
+
+### `node cli.js doctor` — Run health checks
+
+```powershell
+node cli.js doctor
+```
+
 Checks: git, node, npm, workspace.
 
-### ESLint
-```powershell
-node -e "require('./agent/tools').run('eslint')"
+Example output:
 ```
-Auto-detects `.eslintrc` or `eslint.config.js`. Skips if not found.
+═══════════════════════════════════════════
+ Running environment health checks...
+═══════════════════════════════════════════
 
-### npm commands
-```powershell
-node -e "require('./agent/tools').run('install')"
-node -e "require('./agent/tools').run('test')"
-node -e "require('./agent/tools').run('npm', ['run', 'build'])"
-```
-Requires `package.json` in workspace.
+   ✓ git: git version 2.42.0
+   ✓ node: v20.11.0
+   ✓ npm: 10.2.4
+   ✓ workspace: main
 
-### Tests (auto-detect)
-```powershell
-node -e "require('./agent/tools').run('test')"
-```
-Auto-detects: `jest`, `vitest`, `npm test`.
-
-### List available tools
-```powershell
-node -e "console.log(require('./agent/tools').available().join(', '))"
+ Result: ✓ All checks passed
 ```
 
 ---
 
-## Logs
+### `node cli.js validate` — Run all validators
 
-All logs are JSON in `logs/`:
+```powershell
+node cli.js validate
+```
 
-| Command | Description |
+Runs syntax, git, node, and lint validators on the workspace.
+
+Example output:
+```
+═══════════════════════════════════════════
+ Validating workspace...
+═══════════════════════════════════════════
+
+   ◐ syntax
+   ◐ git
+   ◐ node
+   ◐ lint
+
+  [VALIDATOR] ✓ syntax (120ms)
+  [VALIDATOR] ✓ git (45ms)
+  [VALIDATOR] ✓ node (30ms)
+  [VALIDATOR] — lint (skipped)
+
+ Validation summary:
+   Passed:  3
+   Failed:  0
+   Skipped: 1
+```
+
+---
+
+### `node cli.js rollback` — Roll back workspace
+
+```powershell
+node cli.js rollback
+```
+
+Resets all uncommitted changes in the workspace via `git reset --hard`.
+
+Example output:
+```
+═══════════════════════════════════════════
+ Rolling back workspace...
+═══════════════════════════════════════════
+   ◐ git reset --hard
+   ◐ git clean -fd
+
+   ✓ git reset --hard done
+   ✓ git clean -fd   done
+
+ ✓ Workspace rolled back to last clean state
+```
+
+---
+
+### `node cli.js config` — Show configuration
+
+```powershell
+node cli.js config
+```
+
+Example output:
+```
+═══════════════════════════════════════════
+ DevOS Configuration
+═══════════════════════════════════════════
+
+{
+  "version": "1.1.0",
+  "workspace": "workspace/",
+  "ai": { ... },
+  "validator": { ... },
+  "tools": { ... },
+  ...
+}
+```
+
+---
+
+### `node cli.js help` — Show this help
+
+```powershell
+node cli.js help
+```
+
+Example output:
+```
+═══════════════════════════════════════════
+ DevOS CLI Commands
+═══════════════════════════════════════════
+
+   node cli.js run         - Run the DevOS agent pipeline with a task
+   node cli.js doctor      - Run environment health checks
+   node cli.js validate    - Run all validators on the current workspace
+   node cli.js rollback    - Roll back the workspace to the last clean state
+   node cli.js config      - Show the current DevOS configuration
+   node cli.js help        - Show this help message
+```
+
+---
+
+## Logs (JSON)
+
+All pipeline logs are written as JSON to `logs/`:
+
+| File | Description |
 |---|---|
-| `cat logs/state.json` | Current state machine state |
-| `cat logs/context.json` | File ranking, dependency map, complexity |
-| `cat logs/analysis.json` | Reasoning analysis (affected files, priority) |
-| `cat logs/reasoning-plan.json` | Planned steps from reasoning |
-| `cat logs/confidence.json` | Confidence score and blockage status |
-| `cat logs/review.json` | Self-review issues and approval |
-| `cat logs/execution.json` | Execution queue with step traces |
-| `cat logs/report.json` | Validator results (syntax, git, node, lint) |
-| `cat logs/plan.json` | Execution plan |
-| `cat logs/memory-history.json` | All past run records |
-| `cat logs/memory-mistakes.json` | Tracked failures and errors |
-| `cat logs/memory-patterns.json` | Success patterns per file |
-| `cat logs/memory-solutions.json` | Cached solutions |
+| `logs/state.json` | Current state machine state |
+| `logs/context.json` | File ranking, dependency map, complexity |
+| `logs/analysis.json` | Reasoning analysis (affected files, priority) |
+| `logs/reasoning-plan.json` | Planned steps from reasoning |
+| `logs/confidence.json` | Confidence score and blockage status |
+| `logs/review.json` | Self-review issues and approval |
+| `logs/execution.json` | Execution queue with step traces |
+| `logs/report.json` | Validator results (syntax, git, node, lint) |
+| `logs/plan.json` | Execution plan |
+| `logs/memory-history.json` | All past run records |
+| `logs/memory-mistakes.json` | Tracked failures and errors |
+| `logs/memory-patterns.json` | Success patterns per file |
+| `logs/memory-solutions.json` | Cached solutions |
 
 ---
 
-## State Machine
+## Module Access (direct `node -e`)
 
-States: `Idle → Planning → Executing → Validating → Completed | Failed | Rollback`
+Skip the CLI and access engine modules directly:
 
 ```powershell
 # View current state
 node -e "const s=require('./logs/state.json');console.log('State:',s.machine,'Task:',s.task)"
-```
 
----
+# View last execution report
+node -e "const r=require('./logs/report.json');console.log('Success:',r.success,'Passed:',r.summary.passed,'Failed:',r.summary.failed)"
 
-## Reasoning Engine
+# View memory stats
+node -e "console.log(require('./agent/memory').getStats().history)"
 
-Each phase produces a log:
+# View config
+node -e "console.log(require('./agent/config').config)"
 
-```powershell
-# View analysis
-node -e "console.log(require('./logs/analysis.json').affectedFiles?.length, 'files affected')"
-
-# View confidence
-node -e "const c = require('./logs/confidence.json'); console.log('Score:', c.confidence, c.blocked ? 'BLOCKED' : 'OK')"
+# List available tools
+node -e "console.log(require('./agent/tools').available().join(', '))"
 ```
 
 ---
@@ -195,83 +299,58 @@ console.log('Passed:', report.summary.passed, 'Failed:', report.summary.failed);
 "
 ```
 
-### Run syntax check only
+### Run single validator
 ```powershell
-node -e "
-require('./agent/validator/syntax').run({ modifiedFiles: ['agent/agent.js'] })
-"
-```
-
-### Run git validator only
-```powershell
-node -e "
-require('./agent/validator/git').run({})
-"
-```
-
-### Run node validator only
-```powershell
-node -e "
-require('./agent/validator/node').run({})
-"
+node -e "require('./agent/validator/syntax').run({ modifiedFiles: ['agent/agent.js'] })"
+node -e "require('./agent/validator/git').run({})"
+node -e "require('./agent/validator/node').run({})"
 ```
 
 ---
 
-## Config
+## Tools Engine (direct)
 
-### View configuration
 ```powershell
-node -e "const c = require('./agent/config'); console.log(JSON.stringify(c.config, null, 2))"
-```
+# Doctor
+node -e "require('./agent/tools').run('doctor')"
 
-### Get specific config value
-```powershell
-node -e "const c = require('./agent/config'); console.log('Version:', c.config.version)"
-```
+# ESLint
+node -e "require('./agent/tools').run('eslint')"
 
-### Config file location
-```
-config/devos.json
+# npm commands
+node -e "require('./agent/tools').run('install')"
+node -e "require('./agent/tools').run('test')"
+node -e "require('./agent/tools').run('npm', ['run', 'build'])"
+
+# Tests auto-detect
+node -e "require('./agent/tools').run('test')"
 ```
 
 ---
 
 ## PowerShell Scripts
 
-### Environment health
 ```powershell
+# Environment health
 powershell -ExecutionPolicy Bypass -File scripts/doctor.ps1
-```
 
-### Environment setup
-```powershell
+# Environment setup
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
-```
 
-### PATH check
-```powershell
+# PATH check
 powershell -ExecutionPolicy Bypass -File scripts/path-check.ps1
-```
 
-### Backup and restore
-```powershell
+# Backup and restore
 powershell -ExecutionPolicy Bypass -File scripts/backup.ps1
 powershell -ExecutionPolicy Bypass -File scripts/restore.ps1
-```
 
-### Load profile
-```powershell
+# Load profile
 powershell -ExecutionPolicy Bypass -File scripts/profile.ps1
-```
 
-### AI loop (legacy v0.6)
-```powershell
+# AI loop (legacy v0.6)
 powershell -ExecutionPolicy Bypass -File scripts/ai.ps1
-```
 
-### Review and apply patches (legacy)
-```powershell
+# Review and apply patches (legacy)
 powershell -ExecutionPolicy Bypass -File scripts/review.ps1
 powershell -ExecutionPolicy Bypass -File scripts/apply.ps1
 ```
@@ -280,109 +359,45 @@ powershell -ExecutionPolicy Bypass -File scripts/apply.ps1
 
 ## PowerShell $PROFILE Commands
 
-These functions are defined in `$PROFILE` and available in every terminal session:
+Available in every terminal session:
 
 ### AI / Agent
 
 ```powershell
-# Open opencode in current directory
-ai
-
-# Run opencode with a prompt
-ai "refactor the config module"
-
-# Analyze current project and open AI workflow
-dev-ai
-
-# Semi-auto agent: collects context then opens opencode
-agent "add error handling to database module"
-
-# Quick AI run with prompt
-agent-run "fix the login bug"
+ai                  # Open opencode in current directory
+ai "prompt"         # Run opencode with a prompt
+dev-ai              # Analyze project and open AI workflow
+agent "task"        # Collect context then open opencode
+agent-run "task"    # Quick AI run with prompt
 ```
 
 ### Navigation
 
 ```powershell
-# Fuzzy-find directory (recursive, excludes node_modules/.git)
-fzf-cd
-
-# Fuzzy-find file and copy path to clipboard
-ctrlp
-
-# Deep directory search with fzf + zoxide
-zz
+fzf-cd              # Fuzzy-find directory
+ctrlp               # Fuzzy-find file and copy path
+zz                  # Deep directory search with fzf + zoxide
 ```
 
 ### Git
 
 ```powershell
-# Stage all and commit with message
-gcommit "fix: resolve login timeout"
-
-# Push current branch
-gp
+gcommit "message"   # Stage all and commit
+gp                  # Push current branch
 ```
 
 ### Project Info
 
 ```powershell
-# Full context: location, git status, recent files + open in VS Code
-dev
-
-# Quick project overview: root, git status, branch, recent files
-proj
+dev                 # Full context: location, git status, recent files + VS Code
+proj                # Quick project overview
 ```
 
 ### Shortcuts
 
 ```powershell
-c        # clear screen
-ll       # Get-ChildItem -Force (show all files)
-..       # Set-Location ..
-g        # open lazygit
-gitui    # open lazygit
-```
-
-### DevOS Agent (Node pipeline)
-
-```powershell
-# Full pipeline: Context → Reasoning → Planner → Executor → Validator → Decision
-node agent/agent.js "describe your task"
-
-# Default task: "analyze project"
-node agent/agent.js
-```
-
-### Load DevOS config manually
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/profile.ps1
-```
-
----
-
-## Quick Reference
-
-```powershell
-# Full agent run
-node agent/agent.js "your task"
-
-# Environment health check
-powershell -ExecutionPolicy Bypass -File scripts/doctor.ps1
-
-# Run doctor tool
-node -e "require('./agent/tools').run('doctor')"
-
-# View last execution report
-node -e "const r=require('./logs/report.json');console.log('Success:',r.success,'Passed:',r.summary.passed,'Failed:',r.summary.failed)"
-
-# View agent state
-node -e "const s=require('./logs/state.json');console.log('State:',s.machine,'Task:',s.task)"
-
-# View memory stats
-node -e "console.log(require('./agent/memory').getStats().history)"
-
-# All config values
-node -e "console.log(require('./agent/config').config)"
+c                   # clear screen
+ll                  # Get-ChildItem -Force
+..                  # Set-Location ..
+g / gitui           # open lazygit
 ```
