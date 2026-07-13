@@ -39,6 +39,16 @@ Example output:
 
 ---
 
+### `node cli.js orchestrate` — Multi-agent orchestration (v1.4.0)
+
+```powershell
+node cli.js orchestrate "refactor config module"
+```
+
+Runs the full multi-agent pipeline: planner → coder → reviewer → security → decision engine.
+
+---
+
 ### `node cli.js doctor` — Run health checks
 
 ```powershell
@@ -101,21 +111,95 @@ Example output:
 node cli.js rollback
 ```
 
-Resets all uncommitted changes in the workspace via `git reset --hard`.
+Resets all uncommitted changes via `git reset --hard`.
 
-Example output:
+---
+
+### `node cli.js security` — Security scan (v1.4.0)
+
+```powershell
+node cli.js security
 ```
-═══════════════════════════════════════════
- Rolling back workspace...
-═══════════════════════════════════════════
-   ◐ git reset --hard
-   ◐ git clean -fd
 
-   ✓ git reset --hard done
-   ✓ git clean -fd   done
+Scans the project with 5 modules:
+- Secrets (API keys, passwords, tokens, private keys)
+- Patterns (eval, innerHTML, code injection, path traversal)
+- Dependencies (unsafe packages, loose versions, malicious scripts)
+- Permissions (sensitive files, .gitignore compliance)
+- Vulnerabilities (common mistakes, debug logging, empty catches)
 
- ✓ Workspace rolled back to last clean state
+---
+
+### `node cli.js history` — Show execution history
+
+```powershell
+node cli.js history
 ```
+
+---
+
+### `node cli.js memory` — Memory and error statistics
+
+```powershell
+node cli.js memory
+```
+
+Shows cross-store search, similarity scoring, and recommendation engine results.
+
+---
+
+### `node cli.js explain` — Explain decisions (v1.4.0 enhanced)
+
+```powershell
+node cli.js explain                    # latest decision
+node cli.js explain "task name"        # search by task
+node cli.js explain --all              # all recent explanations
+```
+
+Displays reasoning, confidence score, evidence, files changed, and similar solutions.
+
+---
+
+### `node cli.js plugins` — Plugin management (v1.4.0 enhanced)
+
+```powershell
+node cli.js plugins                         # list installed
+node cli.js plugins search <query>          # search marketplace
+node cli.js plugins install <name>          # install a plugin
+node cli.js plugins uninstall <name>        # uninstall
+node cli.js plugins info <name>             # show plugin manifest
+```
+
+---
+
+### `node cli.js issue` — GitHub issue operations (v1.4.0)
+
+```powershell
+node cli.js issue analyze <number>    # analyze an issue
+```
+
+Requires `GITHUB_TOKEN` or `GH_TOKEN` environment variable.
+
+---
+
+### `node cli.js pr` — GitHub PR operations (v1.4.0)
+
+```powershell
+node cli.js pr review <number>        # review a pull request
+node cli.js pr create <title>         # create a pull request
+```
+
+Requires `GITHUB_TOKEN` or `GH_TOKEN` environment variable.
+
+---
+
+### `node cli.js dashboard` — Start web dashboard
+
+```powershell
+node cli.js dashboard
+```
+
+Opens local web UI at `http://localhost:3000`.
 
 ---
 
@@ -125,42 +209,12 @@ Example output:
 node cli.js config
 ```
 
-Example output:
-```
-═══════════════════════════════════════════
- DevOS Configuration
-═══════════════════════════════════════════
-
-{
-  "version": "1.1.0",
-  "workspace": "workspace/",
-  "ai": { ... },
-  "validator": { ... },
-  "tools": { ... },
-  ...
-}
-```
-
 ---
 
 ### `node cli.js help` — Show this help
 
 ```powershell
 node cli.js help
-```
-
-Example output:
-```
-═══════════════════════════════════════════
- DevOS CLI Commands
-═══════════════════════════════════════════
-
-   node cli.js run         - Run the DevOS agent pipeline with a task
-   node cli.js doctor      - Run environment health checks
-   node cli.js validate    - Run all validators on the current workspace
-   node cli.js rollback    - Roll back the workspace to the last clean state
-   node cli.js config      - Show the current DevOS configuration
-   node cli.js help        - Show this help message
 ```
 
 ---
@@ -179,6 +233,7 @@ All pipeline logs are written as JSON to `logs/`:
 | `logs/review.json` | Self-review issues and approval |
 | `logs/execution.json` | Execution queue with step traces |
 | `logs/report.json` | Validator results (syntax, git, node, lint) |
+| `logs/explain.json` | Decision explanations (v1.4.0) |
 | `logs/plan.json` | Execution plan |
 | `logs/memory-history.json` | All past run records |
 | `logs/memory-mistakes.json` | Tracked failures and errors |
@@ -240,6 +295,30 @@ console.log(JSON.stringify(m.similarTo('syntax'), null, 2));
 "
 ```
 
+### Cross-store search (v1.4.0)
+```powershell
+node -e "
+const { search } = require('./agent/memory/index');
+console.log(JSON.stringify(search('syntax error', { stores: ['mistakes','solutions'] }), null, 2));
+"
+```
+
+### Similarity scoring (v1.4.0)
+```powershell
+node -e "
+const { similarity } = require('./agent/memory/index');
+console.log(similarity('fix syntax error in parser', 'fix parser syntax bug'));
+"
+```
+
+### Recommendations (v1.4.0)
+```powershell
+node -e "
+const { recommend } = require('./agent/memory/index');
+console.log(JSON.stringify(recommend('refactor config'), null, 2));
+"
+```
+
 ### Learn from failure (simulate)
 ```powershell
 node -e "
@@ -254,7 +333,7 @@ console.log('Suggestions:', result.suggestedPatterns.length);
 
 ## Patch Engine
 
-Features (v1.2.x):
+Features:
 - **Context matching:** hunks are validated against file content before applying. If context lines don't match, the hunk is skipped instead of corrupting the file.
 - **Bottom-up application:** multiple hunks are applied in reverse order so earlier changes don't invalidate later line numbers.
 - **Window search:** hunks search ±5 lines from the expected position for matching context.
@@ -316,6 +395,46 @@ node -e "require('./agent/validator/node').run({})"
 
 ---
 
+## AI Provider Abstraction (v1.4.0)
+
+```powershell
+# Generate with preferred provider
+node -e "
+const providers = require('./providers/index');
+providers.generate('Write a hello world function', 'openai').then(console.log);
+"
+```
+
+Available providers: `openai`, `anthropic`, `deepseek`, `local`.
+
+Auth via environment variables: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`.
+
+---
+
+## Security Agent (v1.4.0)
+
+```powershell
+# Run security scan
+node -e "
+const security = require('./agent/security/index');
+security.scan().then(results => console.log(JSON.stringify(results, null, 2)));
+"
+```
+
+---
+
+## Explainability Engine (v1.4.0)
+
+```powershell
+# View decision explanations
+node -e "
+const explain = require('./agent/explain/index');
+console.log(JSON.stringify(explain.getDecisions(), null, 2));
+"
+```
+
+---
+
 ## Tools Engine (direct)
 
 ```powershell
@@ -333,30 +452,6 @@ node -e "require('./agent/tools').run('npm', ['run', 'build'])"
 # Tests auto-detect
 node -e "require('./agent/tools').run('test')"
 ```
-
----
-
-## PowerShell Scripts
-
-```powershell
-# Environment health
-powershell -ExecutionPolicy Bypass -File scripts/doctor.ps1
-
-# Environment setup
-powershell -ExecutionPolicy Bypass -File scripts/install.ps1
-
-# PATH check
-powershell -ExecutionPolicy Bypass -File scripts/path-check.ps1
-
-# Backup and restore
-powershell -ExecutionPolicy Bypass -File scripts/backup.ps1
-powershell -ExecutionPolicy Bypass -File scripts/restore.ps1
-
-# Load profile
-powershell -ExecutionPolicy Bypass -File scripts/profile.ps1
-```
-
-> **v1.2.7:** Removed legacy v0.6 scripts (`ai.ps1`, `apply.ps1`, `context.ps1`, `review.ps1`, `apply-pr.ps1`, `review-pr.ps1`). Use the Node.js CLI instead.
 
 ---
 

@@ -1,12 +1,15 @@
 const memory = require("../memory/index");
 const state = require("../state");
+const workspace = require("../workspace");
 const log = require("../logger").get();
+const explainEngine = require("../explain/index");
 
 const context = require("./context");
 const reasoning = require("./reasoning");
 const validation = require("./validation");
 const execution = require("./execution");
 const healing = require("./healing");
+const orchestrator = require("../../agents/orchestrator");
 
 function run(task) {
   state.init(task);
@@ -50,8 +53,57 @@ function run(task) {
   return healing.heal(report, result);
 }
 
+async function orchestrate(task) {
+  log.info("Starting multi-agent orchestration", "PIPELINE");
+  state.init(task);
+  state.transition("Planning");
+
+  const ctx = context.build();
+  const result = await orchestrator.orchestrate(task, ctx);
+  const decisionReport = orchestrator.createDecisionReport(result);
+
+  const explanation = explainEngine.buildDecisionExplanation(task, result.decision, ctx, result);
+  explainEngine.record(task, explanation);
+
+  state.update({ agents: result.agents, agentDecision: result.decision });
+  state.transition("Executing");
+
+  if (result.decision === "COMMIT") {
+    memory.recordRun({
+      task, status: "completed",
+      steps: result.summary.patchesGenerated,
+    });
+    const st = state.get();
+    st.execution.ended = new Date().toISOString();
+    st.machine = "Completed";
+    state.update(st);
+    log.info("ORCHESTRATION — ALL AGENTS APPROVED, COMMITTED", "PIPELINE");
+    return { success: true, result: decisionReport };
+  }
+
+  if (result.decision === "ROLLBACK") {
+    workspace.rollback();
+    memory.recordMistake(task, `orchestration rollback: ${decisionReport.agents.filter(a => !a.approved).map(a => a.name).join(", ")}`, { stage: "orchestration" });
+    const st = state.get();
+    st.execution.ended = new Date().toISOString();
+    st.machine = "Failed";
+    state.update(st);
+    return { success: false, result: decisionReport };
+  }
+
+  // RETRY — run existing healing loop
+  memory.recordMistake(task, `orchestration retry: ${decisionReport.agents.filter(a => !a.approved).map(a => a.name).join(", ")}`, { stage: "orchestration" });
+  const plan = { task, pr: null };
+  const execResult = execution.run(plan);
+  const report = validation.runEngine(execResult);
+  const healed = healing.heal(report, execResult);
+  return { success: healed, result: decisionReport };
+}
+
+const agents = orchestrator.available;
+
 function reset() {
   execution.resetHealing();
 }
 
-module.exports = { run, reset };
+module.exports = { run, orchestrate, agents, reset };

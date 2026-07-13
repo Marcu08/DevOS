@@ -11,7 +11,7 @@ Add dark mode support to this website
 
 **Target project:** `examples/simple-web-project/` — a 3-page HTML website with CSS styling and JavaScript.
 
-## Workflow
+## Single-Agent Workflow
 
 ```
 User input
@@ -48,6 +48,49 @@ User input
     ▼
 [6] Decision
     ├── PASS → keep changes
+    ├── RETRY → heal and retry
+    └── ROLLBACK → revert
+```
+
+## Multi-Agent Workflow (v1.4.0)
+
+```
+User input
+    │
+    ▼
+[1] ORCHESTRATOR
+    ├── assigns task to Planner Agent
+    ├── passes context between agents
+    └── collects results
+    │
+    ▼
+[2] PLANNER AGENT
+    ├── task analysis
+    ├── risk assessment
+    └── step planning
+    │
+    ▼
+[3] CODER AGENT
+    ├── code generation
+    └── patch creation
+    │
+    ▼
+[4] REVIEWER AGENT
+    ├── code review
+    ├── quality scoring
+    └── issue detection
+    │
+    ▼
+[5] SECURITY AGENT
+    ├── secrets scan
+    ├── pattern analysis
+    ├── dependency check
+    ├── permission audit
+    └── vulnerability detection
+    │
+    ▼
+[6] DECISION ENGINE
+    ├── PASS → keep and commit
     ├── RETRY → heal and retry
     └── ROLLBACK → revert
 ```
@@ -92,6 +135,9 @@ node cli.js run "Add dark mode support to this website"
 
 # Or use the demo script:
 bash examples/run-demo.sh
+
+# Or use multi-agent orchestration:
+node cli.js orchestrate "Add dark mode support to this website"
 ```
 
 ## What DevOS Does
@@ -102,7 +148,9 @@ bash examples/run-demo.sh
 4. **Generates** unified diffs with context
 5. **Applies** patches with context matching (skips stale hunks)
 6. **Validates** the result (syntax, git, node, lint)
-7. **Decides** PASS, RETRY, or ROLLBACK
+7. **Reviews** with multi-agent pipeline (v1.4.0)
+8. **Scans** for security issues (v1.4.0)
+9. **Decides** PASS, RETRY, or ROLLBACK
 
 ## Expected Result
 

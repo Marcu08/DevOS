@@ -1,5 +1,60 @@
 # DevOS Changelog
 
+## v1.4.0 — INTELLIGENT ENGINEERING (2026-07-13)
+
+### Multi-Agent Architecture
+- `agents/` — new coordinated agent system with planner, coder, reviewer, security agents
+- `agents/orchestrator.js` — orchestrator that assigns tasks, passes context, collects results, decides
+- `agent/pipeline/index.js` — new `orchestrate()` entry point for multi-agent pipeline
+- CLI: `node cli.js orchestrate <task>` — run the full multi-agent workflow
+- Each agent has consistent `analyze()`, `execute()`, `review()` interface
+
+### GitHub Integration
+- `agent/github/` — native GitHub API integration (no external CLI required)
+- `agent/github/issues.js` — issue reading, comment fetching, issue analysis
+- `agent/github/pr.js` — PR review, file listing, commit fetching, PR creation
+- `agent/github/api.js` — Node.js native `https` API client with token auth
+- CLI: `node cli.js issue analyze <id>`, `node cli.js pr review <id>`, `node cli.js pr create <title>`
+
+### Explainability Engine
+- `agent/explain/` — records every important decision with full traceability
+- Captures: reasoning, confidence score, evidence, files changed, similar solutions, decision
+- Persists to `logs/explain.json` with 50-entry rolling window
+- CLI: enhanced `node cli.js explain` with rich decision display, search by task, --all flag
+
+### Security Agent
+- `agent/security/` — autonomous security reviewer with 5 scanning modules
+- `agent/security/secrets.js` — API keys, passwords, tokens, private keys (8 patterns)
+- `agent/security/patterns.js` — eval, innerHTML, code injection, path traversal (20 rules)
+- `agent/security/dependencies.js` — unsafe packages, loose versions, malicious scripts
+- `agent/security/permissions.js` — sensitive files, .gitignore compliance
+- `agent/security/vulnerabilities.js` — common coding mistakes, debug logging
+- Security results influence pipeline: PASS / RETRY / ROLLBACK
+- CLI: `node cli.js security`
+
+### Plugin Marketplace
+- `plugins/marketplace.json` — marketplace registry with 10 available plugins
+- `plugins/.installed.json` — tracks installed plugins
+- New features: `search()`, `install()`, `uninstall()`, `getManifest()`
+- CLI: `node cli.js plugins search|install|uninstall|info`
+
+### AI Provider Abstraction
+- `providers/` — unified provider interface for AI backends
+- `providers/openai.js`, `anthropic.js`, `deepseek.js`, `local.js`
+- Each implements: `generate()`, `analyze()`, `review()`
+- `providers/index.js` — provider manager with automatic fallback chain
+- API keys via environment variables: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`
+
+### Testing (286 Tests)
+- 13 test suites, 286 tests, 100% passing rate
+- New suites: `agents.test.js` (28 tests), `github.test.js` (22 tests), `security.test.js` (18 tests), `explain.test.js` (15 tests), `providers.test.js` (17 tests), `marketplace.test.js` (12 tests)
+- Test runner now supports async test suites
+
+### Documentation
+- README completely updated: multi-agent architecture diagram, GitHub workflow, security workflow, provider guide
+- CHANGELOG updated with all v1.4.0 changes
+- New sections: Multi-Agent Architecture, GitHub Integration, Security Agent, AI Providers, Plugin Marketplace
+
 ## v1.3.0 — PROFESSIONAL PLATFORM (2026-07-13)
 
 ### CLI Experience

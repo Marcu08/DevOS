@@ -1,0 +1,72 @@
+[
+  {
+    "name": "javascript",
+    "version": "1.0.0",
+    "description": "JavaScript project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "python",
+    "version": "1.0.0",
+    "description": "Python project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "react",
+    "version": "1.0.0",
+    "description": "React project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "docker",
+    "version": "1.0.0",
+    "description": "Docker project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "security",
+    "version": "1.0.0",
+    "description": "Enhanced security scanning rules and tools",
+    "url": ""
+  },
+  {
+    "name": "typescript",
+    "version": "1.0.0",
+    "description": "TypeScript project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "rust",
+    "version": "1.0.0",
+    "description": "Rust project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "go",
+    "version": "1.0.0",
+    "description": "Go project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "ruby",
+    "version": "1.0.0",
+    "description": "Ruby project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "php",
+    "version": "1.0.0",
+    "description": "PHP project detection and tooling",
+    "url": ""
+  },
+  {
+    "name": "test-plugin",
+    "version": "2.0.0",
+    "description": "Updated test plugin",
+    "url": "",
+    "capabilities": [
+      "test",
+      "lint"
+    ]
+  }
+]

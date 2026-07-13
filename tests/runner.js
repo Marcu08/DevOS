@@ -49,12 +49,14 @@ function colorize(text, color) {
   return `${codes[color] || ""}${text}${codes.reset}`;
 }
 
-function runFile(filePath) {
+async function runFile(filePath) {
   const name = path.basename(filePath, ".js");
   console.log(`\n ${colorize("►", "cyan")} ${colorize(name, "bold")}`);
   const start = Date.now();
   try {
-    require(filePath)(assert);
+    const mod = require(filePath);
+    const result = mod(assert);
+    if (result && typeof result.then === "function") await result;
     const ms = Date.now() - start;
     console.log(`   ${colorize("✓", "green")} ${ms}ms`);
   } catch (e) {
@@ -63,7 +65,7 @@ function runFile(filePath) {
   }
 }
 
-function runAll() {
+async function runAll() {
   console.log(colorize("\n  DevOS Test Runner\n", "bold"));
   const files = fs.readdirSync(SUITES_DIR)
     .filter(f => f.endsWith(".test.js"))
@@ -72,7 +74,7 @@ function runAll() {
 
   console.log(`  Found ${files.length} test suite(s)\n` + "─".repeat(40));
 
-  for (const f of files) runFile(f);
+  for (const f of files) await runFile(f);
 
   const pct = RESULTS.total > 0 ? Math.round(RESULTS.pass / RESULTS.total * 100) : 0;
   console.log(`\n${"─".repeat(40)}`);
