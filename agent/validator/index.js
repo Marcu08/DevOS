@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const DEVOS = require("../config");
 const reportBuilder = require("./report");
+const log = require("../logger").get();
 
 const VALIDATORS_DIR = __dirname;
 
@@ -41,14 +42,14 @@ function validate(context) {
     results.push(result);
 
     const status = result.status === "passed" ? "✓" : result.status === "skipped" ? "—" : "✗";
-    console.log(`  [VALIDATOR] ${status} ${name} (${result.time}ms)`);
+    log.info(`${status} ${name} (${result.time}ms)`, "VALIDATOR");
     if (result.error) {
-      console.log(`             ${result.error.slice(0, 120)}`);
+      log.warn(`${result.error.slice(0, 120)}`, "VALIDATOR");
     }
   }
 
   const report = reportBuilder.build(results);
-  console.log(`[VALIDATOR] ${report.summary.passed} passed, ${report.summary.failed} failed, ${report.summary.skipped} skipped`);
+  log.info(`${report.summary.passed} passed, ${report.summary.failed} failed, ${report.summary.skipped} skipped`, "VALIDATOR");
 
   return report;
 }
