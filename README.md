@@ -94,10 +94,35 @@ DevOS/
 
 ```powershell
 # Run the agent
-devos run "your task description"
+node cli.js run "your task description"
+
+# Or use other commands
+node cli.js doctor        # health checks
+node cli.js history       # view past runs
+node cli.js memory        # error statistics
+node cli.js explain       # last execution report
 ```
 
 The agent will: analyze context → reason about the task → plan execution → apply patches → validate changes → decide PASS/RETRY/ROLLBACK.
+
+## Demo
+
+See DevOS in action with the included demo project:
+
+```bash
+# Explore the demo project
+ls examples/simple-web-project/
+
+# Run the demo
+node cli.js run "Add dark mode support to this website"
+
+# Or use the demo script
+bash examples/run-demo.sh
+```
+
+The demo adds dark mode to a 3-page website. See [`docs/demo.md`](docs/demo.md) for the full walkthrough.
+
+> **Try it yourself:** Point DevOS at any project and describe what you want changed.
 
 ## Configuration
 
