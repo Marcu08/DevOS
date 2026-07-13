@@ -207,4 +207,11 @@ function main() {
   executeHealing(report, result);
 }
 
-main();
+// DEPRECATED: agent/agent.js is superseded by agent/pipeline/index.js
+// To run the pipeline, use cli.js or require("./agent/pipeline/index").run(task)
+if (require.main === module) {
+  console.warn("[DEPRECATED] agent/agent.js is deprecated. Use cli.js or agent/pipeline/ instead.");
+  main();
+}
+
+module.exports = { main, initialize, runContext, runReasoning, runExecutor, runValidatorEngine };
