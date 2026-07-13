@@ -78,6 +78,7 @@ function addStep(stepDef) {
     id,
     action: stepDef.action,
     label: stepDef.label || stepDef.action,
+    type: stepDef.type || null,
     status: "pending",
     started: null,
     ended: null,
