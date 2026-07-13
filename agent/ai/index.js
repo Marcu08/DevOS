@@ -9,7 +9,7 @@ const PROVIDER_NAMES = ["opencode", "direct", "fallback"];
 function generatePatch(task, context, errors) {
   const prompt = buildPrompt(task, context, errors);
 
-  const result = tryProvider("opencode", () => opencode.run(prompt))
+  const result = tryProvider("opencode", () => opencode.run(prompt, task))
     || tryProvider("direct", () => direct.run(prompt))
     || fallback.run(task, context, errors);
 
