@@ -1,7 +1,7 @@
 const out = require("../output");
 const state = require("../../state");
 
-function handler(args) {
+async function handler(args) {
   const task = args.join(" ") || "analyze project";
   out.banner(`Task: ${task}`);
 
@@ -18,7 +18,7 @@ function handler(args) {
   for (const s of stages) out.status(s.name, s.state);
   console.log("");
 
-  const result = pipeline.run(task);
+  const result = await pipeline.run(task);
 
   console.log("");
   if (result) {

@@ -26,7 +26,7 @@ function buildPrompt(task, context, errors) {
     lines.push("## Dependency Map");
     for (const k of depKeys.slice(0, 10)) {
       const deps = depMap[k];
-      if (deps.length > 0) lines.push(`- ${k} → ${deps.join(", ")}`);
+      if (deps.length > 0) lines.push(`- ${k} \u2192 ${deps.join(", ")}`);
     }
     lines.push("");
   }
@@ -35,6 +35,26 @@ function buildPrompt(task, context, errors) {
     lines.push("## Previous Errors (Retry)");
     for (const e of errors) {
       lines.push(`- ${e.name}: ${e.error}`);
+    }
+    lines.push("");
+  }
+
+  const pluginRules = context._pluginPromptInjections || [];
+  const projectRules = context.projectRules || [];
+  if (pluginRules.length > 0 || projectRules.length > 0) {
+    lines.push("## Project Rules");
+    lines.push("Follow these project-specific rules:");
+    for (const rule of projectRules) {
+      lines.push(`- ${rule}`);
+    }
+    for (const injection of pluginRules) {
+      const text = typeof injection === "string" ? injection : injection.text || "";
+      if (text) {
+        const subLines = text.split("\n").filter(Boolean);
+        for (const sl of subLines) {
+          lines.push(`- ${sl}`);
+        }
+      }
     }
     lines.push("");
   }

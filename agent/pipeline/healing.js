@@ -8,7 +8,7 @@ const validation = require("./validation");
 const execution = require("./execution");
 const log = require("../logger").get();
 
-function heal(report, result) {
+async function heal(report, result) {
   const dec = execution.decision(report);
 
   if (dec === "PASS" && result) {
@@ -21,12 +21,12 @@ function heal(report, result) {
     });
     memory.recordPattern(result.modifiedFiles?.join(",") || "", "modify", true);
     state.endExecution("completed");
-    log.info("ALL VALIDATORS PASSED — COMMITTED", "AGENT");
+    log.info("ALL VALIDATORS PASSED \u2014 COMMITTED", "AGENT");
     return true;
   }
 
   if (execution.healingCount() >= execution.MAX_HEALING_RETRIES) {
-    log.warn(`MAX RETRIES (${execution.MAX_HEALING_RETRIES}) REACHED — ROLLBACK`, "AGENT");
+    log.warn(`MAX RETRIES (${execution.MAX_HEALING_RETRIES}) REACHED \u2014 ROLLBACK`, "AGENT");
     const failedValidators = report?.validators?.filter(v => v.status === "failed") || [];
     for (const v of failedValidators) {
       memory.recordMistake(state.getTask(), `validator:${v.name}:${v.error}`, { stage: "validation", file: v.name });
@@ -67,7 +67,7 @@ function heal(report, result) {
     }
   }
 
-  const ctx = context.build();
+  const ctx = await context.build();
   const reasoned = reasoning.reason(ctx);
 
   if (reasoned.blocked) {

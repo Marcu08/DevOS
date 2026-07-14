@@ -1,4 +1,4 @@
-# DevOS v1.4.0
+# DevOS v2.0.0
 
 **Autonomous AI software engineering orchestration framework.**
 

@@ -1,5 +1,59 @@
 # DevOS Changelog
 
+## v2.0.0 — PLUGIN FRAMEWORK (2026-07-14)
+
+### Plugin Framework v2 Architecture
+- `plugins/manager.js` — new PluginManager class (single source of truth for plugin loading, validation, caching, detection)
+- `plugins/registry/tools.js` — ToolsRegistry with dynamic plugin tool registration
+- `plugins/registry/validators.js` — ValidatorsRegistry with plugin validator support
+- `plugins/registry/commands.js` — CommandsRegistry with plugin command support
+- `plugins/index.js` — rewritten as backward-compatible facade delegating to PluginManager
+
+### Dynamic Plugin Discovery
+- Support both `plugins/name.js` and `plugins/name/index.js` formats
+- Existing single-file plugins continue to work unchanged
+- Plugin directories with `index.js` are automatically discovered
+
+### Context Augmenters (First Runtime Extension Point)
+- Plugins can export `contextAugmenters` array to enrich the context object
+- Executed during `context.build()` after detection
+- Receive and can mutate the context before AI reasoning
+
+### Prompt Injectors (AI Teaching)
+- Plugins can export `promptInjectors` array to inject rules into the AI prompt
+- V1 plugin `rules` arrays are automatically converted to prompt injectors
+- Injected rules appear in the "Project Rules" section of the AI prompt
+- Auto-included in `buildPrompt()` via `ctx._pluginPromptInjections`
+
+### Plugin Descriptor Validation
+- Validates: duplicate names, invalid field types, unknown fields, malformed detect rules
+- Validation errors never crash DevOS — logged as warnings
+- Unknown plugin fields are reported with descriptive errors
+- V1 plugins detected and logged with upgrade hint
+
+### Extension Registries (Abstraction Layer)
+- ToolsRegistry wraps existing `agent/tools/` with plugin registration API
+- ValidatorsRegistry wraps existing `agent/validator/` with plugin validator support
+- CommandsRegistry wraps existing `agent/cli/commands/` with plugin command support
+- All registries preserve backward compatibility
+
+### PluginManager Public API
+- `get()`, `getAll()`, `getActive()`, `isActive()`, `detect()`, `available()`
+- `getContextAugmenters()`, `runContextAugmenters()`
+- `getPromptInjectors()`, `collectPromptInjections()`
+- `getWarnings()` for validation and load errors
+
+### Backward Compatibility
+- All existing v1 plugins (javascript, python, react, docker, graphql) work unchanged
+- All existing `plugins/index.js` exports preserved
+- All existing tests pass without modification
+- V1 `rules` → auto-converted to prompt injectors
+- V1 `tools` → auto-collected in enabled tools set
+
+### Version Bump
+- `config/devos.json` → 2.0.0
+- `version.json` → 2.0.0
+
 ## v1.4.0 — INTELLIGENT ENGINEERING (2026-07-13)
 
 ### Multi-Agent Architecture

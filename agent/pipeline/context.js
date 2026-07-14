@@ -2,21 +2,31 @@ const path = require("path");
 const fs = require("fs");
 const DEVOS = require("../config");
 const contextModule = require("../context");
-const plugins = require("../../plugins/index");
+const pm = require("../../plugins/manager");
 const state = require("../state");
 const log = require("../logger").get();
 
-function build() {
+async function build() {
   log.info("Building project context...", "CTX");
   const ctx = contextModule.buildContext();
   fs.writeFileSync(path.join(DEVOS.logs, "context.json"), JSON.stringify(ctx, null, 2));
 
-  const activePlugins = plugins.detectPlugins(ctx);
+  const pluginManager = pm.getInstance();
+  const activePlugins = pluginManager.detect(ctx);
   if (activePlugins.length > 0) {
-    log.info(`Detected plugins: ${activePlugins.map(p => p.plugin.name).join(", ")}`, "CTX");
-    ctx.activePlugins = activePlugins.map(p => p.plugin.name);
-    ctx.enabledTools = plugins.getEnabledTools(ctx);
-    ctx.projectRules = plugins.getProjectRules(ctx);
+    log.info(`Detected plugins: ${activePlugins.map(p => p.descriptor.name).join(", ")}`, "CTX");
+    ctx.activePlugins = activePlugins.map(p => p.descriptor.name);
+    ctx.enabledTools = pluginManager.getEnabledTools(ctx);
+    ctx.projectRules = pluginManager.getProjectRules(ctx);
+
+    const enriched = await pluginManager.runContextAugmenters(ctx);
+    if (enriched) Object.assign(ctx, enriched);
+
+    const injections = await pluginManager.collectPromptInjections(ctx);
+    if (injections.length > 0) {
+      ctx._pluginPromptInjections = injections;
+      log.info(`Collected ${injections.length} prompt injection(s) from plugins`, "CTX");
+    }
   }
 
   state.update({

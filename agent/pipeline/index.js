@@ -11,13 +11,13 @@ const execution = require("./execution");
 const healing = require("./healing");
 const orchestrator = require("../../agents/orchestrator");
 
-function run(task) {
+async function run(task) {
   state.init(task);
   state.transition("Planning");
 
   log.info(`Starting pipeline: ${task}`, "PIPELINE");
 
-  const ctx = context.build();
+  const ctx = await context.build();
   const reasoned = reasoning.reason(ctx);
 
   if (reasoned.blocked) {
@@ -58,7 +58,7 @@ async function orchestrate(task) {
   state.init(task);
   state.transition("Planning");
 
-  const ctx = context.build();
+  const ctx = await context.build();
   const result = await orchestrator.orchestrate(task, ctx);
   const decisionReport = orchestrator.createDecisionReport(result);
 
@@ -77,7 +77,7 @@ async function orchestrate(task) {
     st.execution.ended = new Date().toISOString();
     st.machine = "Completed";
     state.update(st);
-    log.info("ORCHESTRATION — ALL AGENTS APPROVED, COMMITTED", "PIPELINE");
+    log.info("ORCHESTRATION \u2014 ALL AGENTS APPROVED, COMMITTED", "PIPELINE");
     return { success: true, result: decisionReport };
   }
 
