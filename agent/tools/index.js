@@ -13,19 +13,41 @@ const REGISTRY = {
   doctor: { module: doctor },
 };
 
+function _getPluginReg() {
+  try {
+    const pm = require("../../plugins/manager");
+    return pm.getInstance().getToolsRegistry();
+  } catch {
+    return null;
+  }
+}
+
 function run(name, args = []) {
   const tool = REGISTRY[name];
-  if (!tool) return { ok: false, error: `Unknown tool: ${name}. Available: ${Object.keys(REGISTRY).join(", ")}` };
-
-  if (tool.method) {
-    return tool.module[tool.method](args);
+  if (tool) {
+    if (tool.method) {
+      return tool.module[tool.method](args);
+    }
+    return tool.module.run(args.length > 0 ? args : tool.defaultArgs || []);
   }
 
-  return tool.module.run(args.length > 0 ? args : tool.defaultArgs || []);
+  const pluginReg = _getPluginReg();
+  if (pluginReg && pluginReg.has(name)) {
+    return pluginReg.run(name, args);
+  }
+
+  const all = available();
+  return { ok: false, error: `Unknown tool: ${name}. Available: ${all.join(", ")}` };
 }
 
 function available() {
-  return Object.keys(REGISTRY);
+  const names = Object.keys(REGISTRY);
+  const pluginReg = _getPluginReg();
+  if (pluginReg) {
+    const pluginNames = Object.keys(pluginReg.getPluginTools());
+    names.push(...pluginNames);
+  }
+  return [...new Set(names)];
 }
 
 module.exports = { run, available };

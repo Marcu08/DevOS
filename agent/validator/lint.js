@@ -1,12 +1,6 @@
 const { execSync } = require("child_process");
-const path = require("path");
-const fs = require("fs");
 const DEVOS = require("../config");
-
-function hasLinter(dir) {
-  const markers = [".eslintrc", ".eslintrc.json", ".eslintrc.js", ".eslintrc.yaml", ".eslintrc.yml", "eslint.config.js"];
-  return markers.some(m => fs.existsSync(path.join(dir, m)));
-}
+const { hasLinter } = require("../util/linter");
 
 function run(context) {
   const start = Date.now();

@@ -34,9 +34,25 @@ function loadCommands() {
       console.error(`Failed to load command '${name}': ${e.message}`);
     }
   }
+
+  // Merge plugin commands from CommandsRegistry
+  try {
+    const pm = require("../../plugins/manager");
+    const cmdReg = pm.getInstance().getCommandsRegistry();
+    const allCmds = cmdReg.loadAll();
+    for (const [cmdName, cmdDef] of Object.entries(allCmds)) {
+      // Skip names that shadow builtins unless they're plugin-prefixed
+      if (!cmdName.includes(":") && registry[cmdName]) {
+        continue;
+      }
+      registry[cmdName] = cmdDef;
+    }
+  } catch (e) {
+    console.error(`Failed to load plugin commands: ${e.message}`);
+  }
 }
 
-function run(argv) {
+async function run(argv) {
   loadCommands();
   const [command, ...args] = argv;
 
@@ -46,7 +62,7 @@ function run(argv) {
   }
 
   try {
-    registry[command].handler(args);
+    await registry[command].handler(args);
   } catch (e) {
     out.error(`Command failed: ${e.message}`);
     process.exit(1);

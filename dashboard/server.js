@@ -12,7 +12,9 @@ function loadJSON(filePath) {
 function apiData() {
   const logsDir = path.join(__dirname, "..", "logs");
   const state = loadJSON(path.join(logsDir, "state.json"));
+  const { version } = require("../version.json");
   return {
+    version,
     state,
     context: loadJSON(path.join(logsDir, "context.json")),
     analysis: loadJSON(path.join(logsDir, "analysis.json")),
@@ -26,7 +28,7 @@ function apiData() {
     knowledge: loadJSON(path.join(logsDir, "memory-knowledge.json")),
     explain: loadJSON(path.join(logsDir, "explain.json")),
     performance: loadJSON(path.join(logsDir, "performance-metrics.json")),
-    sandbox: loadJSON(path.join(path.join(__dirname, "..", "workspace", "sandbox"), "status.json")),
+    sandbox: loadJSON(path.join(path.join(__dirname, "..", "sandbox"), "status.json")),
     cache: loadJSON(path.join(logsDir, "cache", "metrics.json")),
     agents: state?.agents || null,
   };
@@ -48,8 +50,9 @@ const server = http.createServer((req, res) => {
     serveFile(res, path.join(__dirname, "index.html"));
     return;
   }
-  const filePath = path.join(__dirname, req.url);
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+  const safePath = path.normalize(req.url).replace(/^(\.\.(\/|\\))+/g, "");
+  const filePath = path.join(__dirname, safePath);
+  if (filePath.startsWith(__dirname) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     serveFile(res, filePath);
   } else {
     res.writeHead(404);
@@ -57,5 +60,5 @@ const server = http.createServer((req, res) => {
   }
 });
 
-console.log(`\n  DevOS Dashboard v1.5.0 running at http://localhost:${PORT}\n`);
+console.log(`\n  DevOS Dashboard v${require("../version.json").version} running at http://localhost:${PORT}\n`);
 server.listen(PORT);

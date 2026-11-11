@@ -17,7 +17,7 @@ const DANGEROUS_PATTERNS = [
   { pattern: /\.github\/workflows/, label: "CI/CD change" },
 ];
 
-const MODE_FILE = path.join(DEVOS.config.configDir || path.join(DEVOS.root, "config"), "mode.json");
+const MODE_FILE = path.join(DEVOS.logs, "mode.json");
 
 function getModeDir() {
   return path.dirname(MODE_FILE);

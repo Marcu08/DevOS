@@ -1,0 +1,202 @@
+#!/usr/bin/env node
+/**
+ * Interactive DevOS setup.
+ *
+ * Usage:
+ *   npm run setup                 # interactive prompts
+ *   node cli.js setup             # same, through the CLI
+ *   node scripts/setup.js --check # show which credentials are configured
+ *   node scripts/setup.js --non-interactive
+ *   node scripts/setup.js --notice
+ *
+ * Values are written to .env in the project root. Existing environment
+ * variables always win when DevOS starts, so CI secrets are never overridden.
+ */
+
+const fs = require("fs");
+const path = require("path");
+const readline = require("readline/promises");
+const { stdin, stdout } = require("process");
+
+const ROOT = path.resolve(__dirname, "..");
+const ENV_FILE = path.join(ROOT, ".env");
+
+const KEYS = [
+  { key: "ANTHROPIC_API_KEY", label: "Anthropic API key", secret: true },
+  { key: "OPENAI_API_KEY", label: "OpenAI API key", secret: true },
+  { key: "DEEPSEEK_API_KEY", label: "DeepSeek API key", secret: true },
+  { key: "GITHUB_TOKEN", label: "GitHub token", secret: true },
+  { key: "SUPABASE_URL", label: "Supabase project URL", secret: false },
+  { key: "SUPABASE_ANON_KEY", label: "Supabase anon key", secret: true },
+  { key: "SUPABASE_SERVICE_ROLE_KEY", label: "Supabase service role key (server only)", secret: true },
+  { key: "SUPABASE_ACCESS_TOKEN", label: "Supabase access token (CLI/CI)", secret: true },
+  { key: "SUPABASE_PROJECT_REF", label: "Supabase project reference", secret: false },
+  { key: "SUPABASE_DB_PASSWORD", label: "Supabase database password", secret: true },
+  { key: "DEVOS_ROOT", label: "DevOS project root (optional)", secret: false },
+];
+
+const KNOWN = new Set(KEYS.map((entry) => entry.key));
+const args = new Set(process.argv.slice(2));
+
+if (args.has("--help") || args.has("-h")) {
+  printHelp();
+  process.exit(0);
+}
+
+if (args.has("--notice")) {
+  notice();
+  process.exit(0);
+}
+
+if (args.has("--check")) {
+  check();
+  process.exit(0);
+}
+
+if (args.has("--non-interactive")) {
+  writeEnv(mergeEnv(parseEnv(readEnvFile()), process.env));
+  console.log("DevOS setup: .env written from the current environment.");
+  process.exit(0);
+}
+
+main().catch((error) => {
+  console.error(`DevOS setup failed: ${error.message}`);
+  process.exit(1);
+});
+
+async function main() {
+  const existing = parseEnv(readEnvFile());
+  const rl = readline.createInterface({ input: stdin, output: stdout });
+
+  console.log("\n  DevOS setup\n");
+  console.log("  Press Enter to keep the current value, or type - to clear it.");
+  console.log("  Secrets are stored in .env (gitignored).\n");
+
+  const answers = { ...existing };
+
+  try {
+    for (const entry of KEYS) {
+      const current = existing[entry.key] || "";
+      const suffix = current ? ` [${mask(current)}]` : "";
+      const answer = (await rl.question(`  ${entry.label}${suffix}: `)).trim();
+
+      if (answer === "-") {
+        delete answers[entry.key];
+      } else if (answer !== "") {
+        answers[entry.key] = answer;
+      }
+    }
+  } finally {
+    rl.close();
+  }
+
+  writeEnv(answers);
+  console.log(`\n  Saved ${path.relative(ROOT, ENV_FILE)}`);
+  console.log("  Next steps:");
+  console.log("    node cli.js doctor");
+  console.log("    node cli.js run \"describe the task\"");
+  console.log("    node cli.js setup --check\n");
+}
+
+function notice() {
+  if (fs.existsSync(ENV_FILE) || !stdin.isTTY) return;
+  console.log("\n  DevOS is installed. Run `npm run setup` (or `node cli.js setup`)");
+  console.log("  to configure AI, GitHub, and optional Supabase credentials.\n");
+}
+
+function check() {
+  const values = mergeEnv(parseEnv(readEnvFile()), process.env);
+  console.log("\n  DevOS credential status\n");
+  for (const entry of KEYS) {
+    const value = values[entry.key];
+    console.log(`  ${entry.key.padEnd(30)} ${value ? `set (${mask(value)})` : "not set"}`);
+  }
+  console.log("\n  Precedence: process environment > .env\n");
+}
+
+function readEnvFile() {
+  try {
+    return fs.readFileSync(ENV_FILE, "utf-8");
+  } catch {
+    return "";
+  }
+}
+
+function parseEnv(content) {
+  const result = {};
+  for (const line of String(content).split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).replace(/^export\s+/, "").trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+    let value = trimmed.slice(eq + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    result[key] = value;
+  }
+  return result;
+}
+
+function mergeEnv(base, overrides) {
+  const result = { ...base };
+  for (const [key, value] of Object.entries(overrides)) {
+    if (KNOWN.has(key) && value !== undefined && value !== "") {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+function writeEnv(values) {
+  const lines = [
+    "# DevOS credentials",
+    "# Generated by scripts/setup.js. Never commit this file.",
+    "",
+  ];
+
+  for (const entry of KEYS) {
+    const value = values[entry.key];
+    if (value === undefined || value === "") {
+      lines.push(`${entry.key}=`);
+    } else {
+      lines.push(`${entry.key}=${quote(value)}`);
+    }
+  }
+
+  fs.writeFileSync(ENV_FILE, `${lines.join("\n")}\n`, { mode: 0o600 });
+  try {
+    fs.chmodSync(ENV_FILE, 0o600);
+  } catch {
+    // Windows has no POSIX mode; the file is still protected by .gitignore.
+  }
+}
+
+function quote(value) {
+  if (/^[A-Za-z0-9_./:@+-]+$/.test(value)) return value;
+  return JSON.stringify(value);
+}
+
+function mask(value) {
+  if (value.length <= 8) return "***";
+  return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
+function printHelp() {
+  console.log(`
+  DevOS setup
+
+  Usage:
+    node scripts/setup.js                 Interactive credential setup
+    node scripts/setup.js --check         Show credential status
+    node scripts/setup.js --non-interactive
+                                          Write .env from process environment
+    node scripts/setup.js --notice        Print a short onboarding notice
+    node scripts/setup.js --help          Show this help
+
+  Values are written to .env (gitignored). Environment variables already
+  present in the process take precedence over .env at runtime.
+`);
+}

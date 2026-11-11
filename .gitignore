@@ -2,3 +2,6 @@ workspace/
 backup/
 logs/
 node_modules/
+sandbox/
+.env
+config/mode.json

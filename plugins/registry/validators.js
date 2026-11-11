@@ -27,6 +27,10 @@ class ValidatorsRegistry {
     return name in this._plugins;
   }
 
+  getPlugins() {
+    return { ...this._plugins };
+  }
+
   _loadBuiltin(name) {
     try {
       return require(path.join(VALIDATORS_DIR, name));

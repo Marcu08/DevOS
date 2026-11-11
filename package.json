@@ -1,0 +1,35 @@
+{
+  "name": "@marcu08/devos",
+  "version": "2.0.0",
+  "description": "Autonomous AI software engineering orchestration framework",
+  "license": "MIT",
+  "bin": {
+    "devos": "./cli.js"
+  },
+  "scripts": {
+    "start": "node cli.js",
+    "setup": "node scripts/setup.js",
+    "postinstall": "node scripts/setup.js --notice",
+    "test": "node tests/runner.js",
+    "doctor": "node cli.js doctor",
+    "lint": "knip"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marcu08/DevOS.git"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "autonomous",
+    "code-generation",
+    "orchestration",
+    "software-engineering"
+  ],
+  "devDependencies": {
+    "knip": "^6.26.0"
+  }
+}

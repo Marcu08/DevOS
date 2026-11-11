@@ -78,5 +78,5 @@ module.exports = {
   recordRun, recordMistake, recordPattern, cacheSolution, recallSolution,
   getStats, learnFromFailure,
   search, similarity, recommend,
-  knowledge, graph,
+  knowledge, graph, history,
 };

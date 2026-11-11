@@ -1,5 +1,39 @@
 # DevOS Changelog
 
+## Unreleased
+
+### Added
+- Portable project root resolution: `DEVOS_ROOT` or the repository location, with no machine-specific paths
+- `LICENSE` (MIT) and complete `package.json` metadata (`bin`, `scripts`, `engines`, repository)
+- `knip.json` so `npm run lint` understands dynamically loaded commands, plugins, and providers
+- Interactive `node cli.js setup` / `npm run setup` wizard that writes a gitignored `.env`
+- `.env` loading with process-environment precedence
+- GitHub Actions CI for Node 18/20/22 on Ubuntu and Windows
+- Optional Supabase workflow with a clean skip when secrets are missing
+- Test runner options: `--filter`, `--timeout`, `--bail`, `--list`, `--json`, `--verbose`, `--quiet`, `--isolate`
+
+### Changed
+- README rewritten with accurate commands, installation, execution modes, architecture, providers, and troubleshooting
+- The Git-managed workspace is rebuilt from current project files on every run (up to 200 files)
+- Package identity is now `@marcu08/devos` with the `devos` binary
+- Execution mode moved from `config/mode.json` to `logs/mode.json` (runtime state, gitignored)
+
+### Fixed
+- Pipeline prepares the workspace before applying patches
+- Dashboard version now comes from `version.json`
+- Dashboard reads the sandbox status from the correct path
+- `config` command shows the real execution mode instead of the unused `safeMode` flag
+- Removed hardcoded `root`/`workspace` values from `config/devos.json`
+- `doctor` no longer fails on a fresh clone without `workspace/`
+- Marketplace tests no longer leave `test-plugin` behind
+
+### Removed
+- Unused `agent/patch-engine/matcher.js` and `agent/util/index.js`
+
+### Docs
+- Added `mode`, `sandbox`, and `performance` to `docs/Commands.md`
+- Fixed the placeholder clone URL in `docs/Getting Started.md`
+
 ## v2.0.0 — PLUGIN FRAMEWORK (2026-07-14)
 
 ### Plugin Framework v2 Architecture

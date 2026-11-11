@@ -22,8 +22,8 @@ if (-not $Config) {
     }
 }
 
-$env:DEVOS_ROOT = $Config.root
-$env:DEVOS_WORKSPACE = $Config.workspace
+$env:DEVOS_ROOT = if ($Config.root) { $Config.root } else { "$DEVOS_ROOT" }
+$env:DEVOS_WORKSPACE = if ($Config.workspace) { $Config.workspace } else { "$DEVOS_ROOT\workspace" }
 $env:DEVOS_AI = if ($Config.ai -is [string]) { $Config.ai } else { $Config.ai.provider }
 
 Write-Host "[DEVOS] Loaded config v$($Config.version)"

@@ -1,11 +1,9 @@
 const { execSync } = require("child_process");
-const path = require("path");
-const fs = require("fs");
 const DEVOS = require("../config");
+const { hasLinter } = require("../util/linter");
 
 function isAvailable() {
-  const markers = [".eslintrc", ".eslintrc.json", ".eslintrc.js", ".eslintrc.yaml", "eslint.config.js"];
-  return markers.some(m => fs.existsSync(path.join(DEVOS.workspace, m)));
+  return hasLinter(DEVOS.workspace);
 }
 
 function run(args = []) {

@@ -1,36 +1,43 @@
-﻿$ErrorActionPreference = "Stop"
+. $PSScriptRoot\lib.ps1
+$ErrorActionPreference = "Stop"
+
+$OutputEncoding = [Console]::OutputEncoding
 
 Write-Host "DEVOS RESTORE"
 
-$backupDir = "$env:USERPROFILE\.devos\backups"
-$backups = Get-ChildItem -Path $backupDir -Directory | Sort-Object LastWriteTime -Descending
+$backupRoot = "$env:USERPROFILE\.devos\backups"
+$latest = Get-ChildItem $backupRoot -Directory -Filter "full_*" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
 
-if (-not $backups) {
-    Write-Host "[ERROR] No backups found in $backupDir"
+if (-not $latest) {
+    Write-Host "[ERROR] No backups found in $backupRoot"
+    Write-Host "Run scripts\backup.ps1 first."
     exit 1
 }
 
-$latest = $backups[0].FullName
-Write-Host "Restoring from: $latest"
+Write-Host "[INFO] Using backup: $($latest.FullName)"
 
-try {
-    $wezterm = Join-Path $latest "wezterm.lua"
-    if (Test-Path $wezterm) {
-        Copy-Item $wezterm "$env:USERPROFILE\.wezterm.lua" -Force
-        Write-Host "[OK] Restored WezTerm config"
-    }
-} catch {
-    Write-Host "[WARN] WezTerm restore failed: $_"
+$weztermBackup = Join-Path $latest.FullName "wezterm.lua"
+$profileBackup = Join-Path $latest.FullName "profile.ps1"
+
+if (Test-Path $weztermBackup) {
+    Copy-Item $weztermBackup "$env:USERPROFILE\.wezterm.lua" -Force
+    Write-Host "[OK] Restored WezTerm config"
+} else {
+    Write-Host "[WARN] wezterm.lua not found in backup"
 }
 
-try {
-    $profileFile = Join-Path $latest "profile.ps1"
-    if ($PROFILE -and (Test-Path $profileFile)) {
-        Copy-Item $profileFile $PROFILE -Force
+if ($profileBackup -and (Test-Path $profileBackup)) {
+    if (-not $PROFILE) {
+        Write-Host "[WARN] No PowerShell profile path available"
+    } else {
+        New-Item -ItemType Directory -Force -Path (Split-Path $PROFILE) | Out-Null
+        Copy-Item $profileBackup $PROFILE -Force
         Write-Host "[OK] Restored PowerShell profile"
     }
-} catch {
-    Write-Host "[WARN] Profile restore failed: $_"
+} else {
+    Write-Host "[WARN] profile.ps1 not found in backup"
 }
 
 Write-Host "[OK] Restore completed"

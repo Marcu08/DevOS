@@ -58,15 +58,5 @@
     "version": "1.0.0",
     "description": "PHP project detection and tooling",
     "url": ""
-  },
-  {
-    "name": "test-plugin",
-    "version": "2.0.0",
-    "description": "Updated test plugin",
-    "url": "",
-    "capabilities": [
-      "test",
-      "lint"
-    ]
   }
 ]

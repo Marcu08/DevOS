@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "dashboard/server.js",
+    "tests/*.test.js",
+    "agent/cli/commands/*.js",
+    "agent/executor/*.js",
+    "agent/validator/*.js",
+    "agent/ai/request-helper.js",
+    "agents/*.js",
+    "plugins/*.js",
+    "plugins/registry/*.js",
+    "providers/*.js"
+  ],
+  "project": [
+    "agent/**/*.js",
+    "agents/**/*.js",
+    "dashboard/**/*.js",
+    "plugins/**/*.js",
+    "providers/**/*.js",
+    "tests/**/*.js"
+  ],
+  "exclude": [
+    "exports",
+    "types",
+    "duplicates"
+  ]
+}

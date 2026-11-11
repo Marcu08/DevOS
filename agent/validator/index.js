@@ -14,6 +14,15 @@ function loadValidator(name) {
   }
 }
 
+function _getPluginReg() {
+  try {
+    const pm = require("../../plugins/manager");
+    return pm.getInstance().getValidatorsRegistry();
+  } catch {
+    return null;
+  }
+}
+
 function validate(context) {
   const cfg = DEVOS.config.validator || {};
   const enabled = {
@@ -45,6 +54,22 @@ function validate(context) {
     log.info(`${status} ${name} (${result.time}ms)`, "VALIDATOR");
     if (result.error) {
       log.warn(`${result.error.slice(0, 120)}`, "VALIDATOR");
+    }
+  }
+
+  // Run plugin validators from the registry
+  const pluginReg = _getPluginReg();
+  if (pluginReg) {
+    for (const [name, validator] of Object.entries(pluginReg.getPlugins())) {
+      try {
+        const result = validator.run(context);
+        results.push({ ...result, name });
+        const status = result.status === "passed" ? "✓" : result.status === "skipped" ? "—" : "✗";
+        log.info(`${status} ${name} (plugin) (${result.time}ms)`, "VALIDATOR");
+      } catch (e) {
+        log.warn(`Plugin validator '${name}' failed: ${e.message}`, "VALIDATOR");
+        results.push({ name, status: "failed", time: 0, error: e.message });
+      }
     }
   }
 

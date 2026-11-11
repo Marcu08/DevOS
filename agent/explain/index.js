@@ -77,9 +77,9 @@ function buildDecisionExplanation(task, decision, context, orchestrationResult) 
     evidence,
     filesChanged: context?.topFiles?.slice(0, 10).map(f => f.file) || [],
     similarSolutions: similarSolutions.slice(0, 3).map(s => ({
-      task: s.task,
-      status: s.status,
-      confidence: s.confidence,
+      task: s.data?.task || s.task,
+      status: s.data?.status || s.status,
+      confidence: s.data?.confidence || s.confidence,
     })),
     decision,
     summary: buildSummary(task, {

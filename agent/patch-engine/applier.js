@@ -51,6 +51,9 @@ function findHunkPosition(lines, expectedPos, ctxBefore, removed) {
     return expectedPos;
   }
 
+  let bestMatch = -1;
+  let bestOffset = Infinity;
+
   for (let offset = 0; offset < 5; offset++) {
     for (const sign of [1, -1]) {
       const startPos = expectedPos + sign * offset;
@@ -76,11 +79,14 @@ function findHunkPosition(lines, expectedPos, ctxBefore, removed) {
         }
       }
 
-      if (match) return startPos;
+      if (match && offset < bestOffset) {
+        bestOffset = offset;
+        bestMatch = startPos;
+      }
     }
   }
 
-  return -1;
+  return bestMatch;
 }
 
 module.exports = { apply };

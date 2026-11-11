@@ -1,92 +1,347 @@
-# DevOS v2.0.0
+# DevOS
 
 **Autonomous AI software engineering orchestration framework.**
 
-Analyzes → Plans → Modifies → Validates → Remembers → Explains.
+`Analyze → Plan → Modify → Validate → Remember → Explain`
 
-Every decision is explainable, every modification is traceable, every error is reversible.
+![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![CI](https://github.com/Marcu08/DevOS/actions/workflows/ci.yml/badge.svg)
 
----
+> Package: `@marcu08/devos` · CLI binary: `devos`
 
-## What is DevOS?
+DevOS is a Node.js framework that turns a coding task into a controlled engineering
+pipeline. Instead of asking a model for a code snippet, DevOS scans the repository,
+builds context, plans the change, generates and applies a unified diff inside a
+Git-managed workspace, validates the result, heals failures, and records why each
+decision was made.
 
-DevOS is an operating system layer for autonomous software agents. Unlike AI coding assistants that simply generate code, DevOS orchestrates a complete engineering workflow:
-
-1. **Context Analysis** — scans repositories, ranks files, builds dependency graphs
-2. **Reasoning** — analyzes tasks, plans steps, scores confidence, self-reviews
-3. **Multi-Agent Orchestration** — coordinates planner, coder, reviewer, and security agents
-4. **Execution** — generates unified diffs, applies patches with context matching
-5. **Validation** — syntax checks, git status, lint, and run validation
-6. **Healing Loop** — PASS → keep, RETRY → heal and retry, ROLLBACK → revert
-7. **Memory** — persistent history, mistake tracking, pattern learning, solution caching
-8. **Explainability** — every decision recorded with reasoning, confidence, and evidence
-9. **Security Scanning** — secrets detection, unsafe patterns, dependency analysis
+> **Status:** early-stage developer tool. DevOS modifies files in a Git-managed
+> `workspace/` copy and can execute validation commands. Review every change before
+> merging it into your main tree.
 
 ---
 
-## Quick Start
+## Table of contents
+
+- [Why DevOS](#why-devos)
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Setup and authentication](#setup-and-authentication)
+- [Commands](#commands)
+- [Execution modes](#execution-modes)
+- [How it works](#how-it-works)
+- [Multi-agent orchestration](#multi-agent-orchestration)
+- [Engines and modules](#engines-and-modules)
+- [Memory and learning](#memory-and-learning)
+- [Security](#security)
+- [AI providers](#ai-providers)
+- [Plugins](#plugins)
+- [Dashboard](#dashboard)
+- [Sandbox](#sandbox)
+- [Configuration](#configuration)
+- [Testing](#testing)
+- [CI](#ci)
+- [Documentation](#documentation)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Why DevOS
+
+AI coding assistants are good at producing code and bad at owning the process around
+it. DevOS adds the missing engineering loop:
+
+- **Repository-aware** — the context engine scans, ranks, and maps dependencies before
+  a single line is generated.
+- **Planned** — a reasoning stage extracts affected files, estimates confidence, and
+  produces a structured plan.
+- **Bounded** — changes are applied to a Git-managed workspace, not blindly to your
+  working tree.
+- **Verified** — syntax, runtime, Git, and lint validators decide whether a change is
+  kept, retried, or rolled back.
+- **Remembered** — every run, mistake, pattern, and successful solution is persisted
+  and reused on later tasks.
+- **Explainable** — decisions carry reasoning, confidence, evidence, and the files
+  that changed.
+
+---
+
+## Features
+
+| Capability | What it does |
+|------------|--------------|
+| Context engine | Scans the repo, ranks files by importance, builds a dependency graph |
+| Reasoning engine | Analyzes the task, plans steps, scores confidence, self-reviews |
+| Multi-agent mode | Coordinates planner, coder, reviewer, and security agents |
+| Patch engine | Parses and applies unified diffs with context matching |
+| Validation | Syntax, Node runtime, Git status, and ESLint checks |
+| Healing loop | `PASS` keeps changes, `RETRY` heals and retries, `ROLLBACK` reverts |
+| Memory | History, mistakes, patterns, solutions, similarity search, recommendations |
+| Knowledge graph | Persistent entities and relationships extracted from runs |
+| Security scanner | Secrets, unsafe patterns, dependencies, permissions, vulnerabilities |
+| Explainability | Records the reasoning and evidence behind each decision |
+| GitHub integration | Issue analysis, PR review, and PR creation through the GitHub API |
+| Plugin system | Detection plugins, tools, validators, commands, context augmenters |
+| Dashboard | Local web UI for state, validation, memory, knowledge, and sandbox |
+| Sandbox | Isolated copy for comparing and validating changes before applying |
+| Execution modes | Autonomous, assisted, and safe approval policies |
+
+---
+
+## Quick start
+
+### Requirements
+
+- **Node.js 18+**
+- **Git**
+- Optional: **OpenCode CLI** for the `opencode` AI provider
+- Optional (Windows): **PowerShell 7** for the `.ps1` setup scripts and the
+  `opencode` provider
+
+There are no runtime npm dependencies. A fresh clone runs with `node` alone;
+`npm install` is only needed for development tooling.
+
+### Install
 
 ```bash
-node cli.js doctor                     # health checks
-node cli.js run "your task"            # run the pipeline
-node cli.js orchestrate "task"         # multi-agent orchestration
-node cli.js explain                    # decision explanations
-node cli.js security                   # security scan
-node cli.js help                       # all commands
+git clone https://github.com/Marcu08/DevOS.git
+cd DevOS
+node cli.js doctor
 ```
+
+`doctor` verifies Git, Node.js, npm, and the workspace:
+
+```text
+Environment Health Check
+  ✓ git        git version 2.x
+  ✓ node       v18+
+  ✓ npm        10+
+  ✓ workspace  master
+  All checks passed
+```
+
+### Run your first task
+
+```bash
+node cli.js run "add input validation to the config loader"
+```
+
+The pipeline reports context analysis, planning, execution, validation, and the final
+state. Artifacts are written to `logs/`:
+
+```bash
+node cli.js explain      # why the decision was made
+node cli.js history      # past runs
+node cli.js memory       # memory and error statistics
+node cli.js validate     # re-run validators on the workspace
+node cli.js rollback     # discard the workspace changes
+```
+
+---
+
+## Setup and authentication
+
+DevOS works without credentials by using the deterministic fallback provider, but
+real AI providers, GitHub integration, and optional Supabase features need
+authentication.
+
+### Interactive setup
+
+```bash
+npm ci
+npm run setup
+# or
+node cli.js setup
+```
+
+The wizard prompts for AI provider keys, a GitHub token, and optional Supabase
+credentials. It writes a gitignored `.env` file in the project root and never prints
+secrets in full.
+
+```bash
+node cli.js setup --check          # show which credentials are configured
+node scripts/setup.js --non-interactive   # write .env from the current environment
+```
+
+`npm install` runs a short postinstall notice when `.env` is missing; it never
+prompts automatically, so CI installs stay non-interactive.
+
+### Precedence
+
+1. Process environment variables (`ANTHROPIC_API_KEY`, `GITHUB_TOKEN`, ...)
+2. `.env` in the project root
+3. Built-in defaults
+
+Environment variables always win, so CI secrets are never overridden by a local
+`.env`.
+
+### Supabase (optional)
+
+DevOS does not require Supabase. The optional CI workflow uses these repository
+secrets when present:
+
+| Secret | Purpose |
+|--------|---------|
+| `SUPABASE_ACCESS_TOKEN` | Authenticates the Supabase CLI |
+| `SUPABASE_PROJECT_REF` | Supabase project reference |
+| `SUPABASE_DB_PASSWORD` | Required only for `supabase db push` |
+
+Without `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`, the workflow skips with a
+notice instead of failing.
+
+---
 
 ## Commands
 
+All commands run through `cli.js`:
+
+```bash
+node cli.js <command> [args]
+```
+
 | Command | Description |
 |---------|-------------|
-| `run` | Run the DevOS agent pipeline with a task |
-| `orchestrate` | Run multi-agent orchestration pipeline |
+| `run <task>` | Run the DevOS agent pipeline with a task |
+| `orchestrate <task>` | Run the multi-agent orchestration pipeline |
 | `doctor` | Run environment health checks |
+| `setup` | Configure AI, GitHub, and Supabase credentials |
 | `validate` | Run all validators on the current workspace |
-| `rollback` | Roll back the workspace to the last clean state |
-| `security` | Run security scan on the current project |
+| `rollback` | Roll the workspace back to the last clean state |
+| `security` | Run a security scan on the current project |
 | `history` | Show execution history |
-| `memory` | Show memory and error statistics |
-| `explain` | Explain decisions with reasoning, confidence, and evidence |
-| `plugins` | List, install, search, and manage plugins |
-| `issue` | GitHub issue operations (analyze) |
-| `pr` | GitHub PR operations (review, create) |
-| `dashboard` | Start local web dashboard (localhost:3000) |
+| `memory` | Show memory, knowledge graph, and error statistics |
+| `explain [task] [--all]` | Explain decisions with reasoning, confidence, and evidence |
+| `mode [autonomous\|assisted\|safe]` | Set or view the execution mode |
+| `sandbox create\|status\|compare\|clean` | Manage the isolated sandbox environment |
+| `performance` | Show execution time, cache, and agent duration metrics |
+| `plugins [search\|install\|uninstall\|info]` | Manage plugins |
+| `issue analyze <number>` | Analyze a GitHub issue |
+| `pr review <number>` | Review a GitHub pull request |
+| `pr create <title>` | Create a GitHub pull request |
+| `dashboard` | Start the local web dashboard on port 3000 |
 | `config` | Show the current DevOS configuration |
-| `help` | Show this help message |
+| `help` | Show the command list |
+
+See [`docs/Commands.md`](docs/Commands.md) for detailed examples.
+
+### Common workflows
+
+```bash
+# Single-agent pipeline
+node cli.js run "refactor the config loader"
+
+# Multi-agent review
+node cli.js orchestrate "harden the API layer"
+
+# Security-only pass
+node cli.js security
+
+# Investigate the last decision
+node cli.js explain
+node cli.js explain --all
+
+# Safe mode: require approval for every operation
+node cli.js mode safe
+
+# Isolated experiment
+node cli.js sandbox create
+node cli.js sandbox compare
+node cli.js sandbox clean
+```
 
 ---
 
-## Multi-Agent Architecture
+## Execution modes
 
-DevOS v1.4.0 introduces a coordinated multi-agent system:
+The active mode is stored in `logs/mode.json` and can be changed with
+`node cli.js mode <mode>`:
+
+| Mode | Approval | Parallel agents | Use case |
+|------|----------|-----------------|----------|
+| `autonomous` (default) | None | Yes | Trusted local experiments |
+| `assisted` | Execution and dangerous operations | Yes | Normal development |
+| `safe` | Every operation | No | Untrusted repositories |
+
+Dangerous operations include dependency manifests, security files, database
+migrations, certificates, container configuration, and CI workflows.
+
+---
+
+## How it works
+
+```
+Task
+  │
+  ▼
+┌─────────────────────────────────────────────────────────────┐
+│ CONTEXT ENGINE                                              │
+│ scan → rank → dependency map → plugin detection             │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ REASONING ENGINE                                            │
+│ analyze → plan → confidence score → self-review             │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ EXECUTOR                                                    │
+│ generate PR → validate → apply unified diff → commit        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ VALIDATOR ENGINE                                            │
+│ syntax → node run → git status → lint                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+             ┌─────────────────────────────┐
+             │ DECISION ENGINE             │
+             │ PASS → keep changes         │
+             │ RETRY → heal and retry      │
+             │ ROLLBACK → revert workspace │
+             └──────────────┬──────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ MEMORY + EXPLAINABILITY                                     │
+│ history → mistakes → patterns → solutions → decisions       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The pipeline runs against `workspace/`, a Git-managed copy of the project. The
+workspace is prepared automatically at the start of `run`; `rollback` resets it, and
+deleting it is safe because it is regenerated on the next run.
+
+---
+
+## Multi-agent orchestration
+
+`node cli.js orchestrate "<task>"` runs a second pipeline in which specialized agents
+coordinate explicitly:
 
 ```
 Task
   │
   ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  ORCHESTRATOR                                                │
-│  assigns tasks, passes context, collects results, decides    │
+│ ORCHESTRATOR                                                 │
+│ assigns tasks, passes context, collects results, decides     │
 └──┬──────────┬────────────┬────────────────┬──────────────────┘
    │          │            │                │
    ▼          ▼            ▼                ▼
 ┌──────┐ ┌────────┐ ┌──────────┐ ┌──────────────┐
 │PLANNER│ │ CODER  │ │ REVIEWER │ │   SECURITY   │
-│Agent  │ │ Agent  │ │ Agent    │ │   Agent      │
 └──┬────┘ └───┬────┘ └────┬─────┘ └──────┬───────┘
-   │          │            │              │
-   └──────────┴────────────┴──────────────┘
-                        │
-                        ▼
-              ┌───────────────────┐
-              │  DECISION ENGINE  │
-              │ COMMIT / RETRY /  │
-              │ ROLLBACK          │
-              └───────────────────┘
+   └──────────┴───────────┴───────────────┘
+                       │
+                       ▼
+             ┌───────────────────┐
+             │  DECISION ENGINE  │
+             │ COMMIT / RETRY /  │
+             │ ROLLBACK          │
+             └───────────────────┘
 ```
-
-### Agents
 
 | Agent | File | Responsibility |
 |-------|------|----------------|
@@ -98,291 +353,343 @@ Task
 
 ---
 
-## GitHub Integration
-
-Native GitHub workflow support via the GitHub API (no external CLI required):
-
-```bash
-node cli.js issue analyze <number>    # analyze an issue
-node cli.js pr review <number>        # review a pull request
-node cli.js pr create <title>         # create a pull request
-```
-
-Authentication via `GITHUB_TOKEN` or `GH_TOKEN` environment variable.
-
----
-
-## Explainability Engine
-
-Every important decision is recorded with full traceability:
-
-- **Why** — reasoning behind each decision
-- **Confidence** — numerical confidence score (0-100%)
-- **Evidence** — supporting data (review scores, security findings)
-- **Files Changed** — which files were modified
-- **Similar Solutions** — previously recorded solutions for similar tasks
-
-```bash
-node cli.js explain                    # latest decision
-node cli.js explain "task name"        # search by task
-node cli.js explain --all              # all recent explanations
-```
-
----
-
-## Security Agent
-
-Autonomous security reviewer with 5 scanning modules:
-
-| Module | File | Capabilities |
-|--------|------|--------------|
-| Secrets | `agent/security/secrets.js` | API keys, passwords, tokens, private keys |
-| Patterns | `agent/security/patterns.js` | eval, innerHTML, code injection, path traversal |
-| Dependencies | `agent/security/dependencies.js` | Unsafe packages, loose versions, malicious scripts |
-| Permissions | `agent/security/permissions.js` | Sensitive files, .gitignore compliance |
-| Vulnerabilities | `agent/security/vulnerabilities.js` | Common mistakes, debug logging, empty catches |
-
-Security results influence pipeline decisions: **PASS** / **RETRY** / **ROLLBACK**.
-
----
-
-## AI Provider Abstraction
-
-Unified provider interface for multiple AI backends:
-
-| Provider | Auth Env Var | File |
-|----------|-------------|------|
-| OpenAI | `OPENAI_API_KEY` | `providers/openai.js` |
-| Anthropic | `ANTHROPIC_API_KEY` | `providers/anthropic.js` |
-| DeepSeek | `DEEPSEEK_API_KEY` | `providers/deepseek.js` |
-| Local | always available | `providers/local.js` |
-
-Each provider implements: `generate()`, `analyze()`, `review()`.
-
-```javascript
-const providers = require("./providers/index");
-const result = await providers.generate("prompt", "preferred-provider");
-```
-
----
-
-## Plugin Marketplace
-
-The plugin system now supports installable plugins with marketplace search:
-
-```bash
-node cli.js plugins                         # list installed
-node cli.js plugins search <query>          # search marketplace
-node cli.js plugins install <name>          # install a plugin
-node cli.js plugins uninstall <name>        # uninstall
-node cli.js plugins info <name>             # show plugin manifest
-```
-
-Built-in plugins: `javascript`, `python`, `react`, `docker`, and 6 more in the marketplace.
-
----
-
-## Architecture
-
-```
-User Task
-    │
-    ▼
-┌─────────────────────────────────────────────────────┐
-│  CONTEXT ENGINE                                     │
-│  scan → rank → dependency map → plugin detection    │
-└──────────────────────┬──────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│  MULTI-AGENT ORCHESTRATOR                           │
-│  planner → coder → reviewer → security → decision   │
-└──────────────────────┬──────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│  EXECUTOR                                           │
-│  validate PR → generate diffs → apply patches       │
-└──────────────────────┬──────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│  VALIDATOR ENGINE                                   │
-│  syntax → node run → git status → lint              │
-└──────────────────────┬──────────────────────────────┘
-                       ▼
-      ┌─────────────────────────────────────┐
-      │  DECISION ENGINE                    │
-      │  PASS → keep changes                │
-      │  RETRY → heal and retry             │
-      │  ROLLBACK → revert workspace        │
-      └─────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│  MEMORY ENGINE                                      │
-│  history → mistakes → patterns → solutions          │
-│  search → similarity → recommendations              │
-└─────────────────────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│  EXPLAINABILITY ENGINE                              │
-│  reasoning → confidence → evidence → summary        │
-└─────────────────────────────────────────────────────┘
-```
-
-## Engines
+## Engines and modules
 
 | Engine | Location | Description |
 |--------|----------|-------------|
-| Context | `agent/context.js` | Scan repo, rank files, build dependency graph |
-| Reasoning | `agent/reasoning/` | Analyze, plan, confidence scoring, self-review |
-| Orchestrator | `agents/orchestrator.js` | Multi-agent coordination and decision engine |
-| Agents | `agents/` | Planner, coder, reviewer, security agents |
-| Executor | `agent/executor/` | PR validation, patch application, git commits |
-| Patch Engine | `agent/patch-engine/` | Unified diff with context matching (skips stale hunks) |
-| Validator | `agent/validator/` | Syntax, node, git, lint checks |
-| Decision | `agent/pipeline/healing.js` | PASS / RETRY / ROLLBACK with healing loop |
-| State Machine | `agent/state.js` | Idle → Planning → Executing → Validating → Completed |
-| Memory | `agent/memory/` | History, mistakes, patterns, solutions, similarity |
+| Context | `agent/context/` | Repository scan, file ranking, dependency graph |
+| Reasoning | `agent/reasoning/` | Analysis, planning, confidence, self-review |
+| Orchestrator | `agents/orchestrator.js` | Multi-agent coordination and decisions |
+| Executor | `agent/executor.js`, `agent/executor/` | PR validation, patch application, commit, rollback |
+| Patch engine | `agent/patch-engine/` | Unified diff parser, context-matched applier, generator |
+| Validator | `agent/validator/` | Syntax, Node runtime, Git, and lint checks |
+| Pipeline | `agent/pipeline/` | Context → reasoning → execution → validation → healing |
+| State machine | `agent/state.js` | Idle → Planning → Executing → Validating → Completed |
+| Memory | `agent/memory/` | History, mistakes, patterns, solutions, search, similarity |
+| Knowledge graph | `agent/memory/knowledge/` | Persistent entities and relationships |
 | Security | `agent/security/` | Secrets, patterns, dependencies, permissions, vulnerabilities |
-| Explain | `agent/explain/` | Decision recording, reasoning, confidence, evidence |
-| Plugins | `plugins/` | JavaScript, React, Python, Docker auto-detection + marketplace |
-| Providers | `providers/` | OpenAI, Anthropic, DeepSeek, local AI abstraction |
-| GitHub | `agent/github/` | Issue analysis, PR review, PR creation |
+| Explainability | `agent/explain/` | Decision recording, reasoning, confidence, evidence |
+| Approval | `agent/approval/` | Execution modes and approval policies |
+| Sandbox | `agent/sandbox/` | Isolated copy, comparison, cleanup |
+| Performance | `agent/performance/`, `agent/cache/` | Run metrics and cache statistics |
+| Plugins | `plugins/` | Detection, tools, validators, commands, marketplace |
+| Providers | `providers/` | Standalone AI provider abstraction |
+| AI chain | `agent/ai/` | OpenCode → direct API → local fallback |
+| GitHub | `agent/github/` | Issues, pull requests, API client |
 | Tools | `agent/tools/` | ESLint, npm, tests, doctor runners |
-| AI | `agent/ai/` | AI provider chain (opencode, direct, fallback) |
-| CLI | `agent/cli/` | Professional command-line interface (14 commands) |
-| Dashboard | `dashboard/` | Local web UI at localhost:3000 |
+| CLI | `agent/cli/` | Command registry, output, commands |
+| Dashboard | `dashboard/` | Local web UI on port 3000 |
 
----
-
-## Project Structure
+### Project layout
 
 ```
 DevOS/
-├── agents/               Multi-agent system (planner, coder, reviewer, security, orchestrator)
-├── agent/
-│   ├── cli/              Professional CLI (output, commands, router)
-│   ├── executor/         Plugin actions (applyPatch, validate, commit)
-│   ├── explain/          Explainability engine (decision recording, reasoning)
-│   ├── github/           GitHub integration (issues, PRs, API)
-│   ├── memory/           History, mistakes, patterns, solutions, search, similarity
-│   ├── patch-engine/     Unified diff parser, applier (context-matched), generator
-│   ├── pipeline/         Orchestration (context → reasoning → exec → validate → heal)
-│   ├── reasoning/        Analyze, plan, confidence (config-driven), reviewer
-│   ├── security/         Security scanner (secrets, patterns, dependencies, permissions)
-│   ├── validator/        Syntax, node, git, lint + report builder
-│   ├── ai/               AI providers (opencode, direct, fallback)
-│   └── tools/            ESLint, npm, tests, doctor runners
-├── providers/            AI provider abstraction (openai, anthropic, deepseek, local)
-├── cli.js                Thin CLI entry point (9 lines)
-├── plugins/              Extensible plugin system + marketplace (javascript, react, python, docker)
-├── dashboard/            Local web dashboard (server.js, index.html)
-├── tests/                Automated test suites (286 tests, 13 suites)
-├── examples/             Demo project and scripts
-├── docs/                 Documentation
-├── config/               Environment configuration
-├── logs/                 JSON logs (context, plan, execution, report, memory)
-└── workspace/            Git-managed working copy
+├── agent/                  Core engines, CLI, executor, memory, security
+├── agents/                 Multi-agent system (planner, coder, reviewer, security)
+├── providers/              Standalone AI provider abstraction
+├── plugins/                Detection plugins and marketplace
+├── dashboard/              Local web dashboard
+├── config/                 devos.json and mode.json
+├── docs/                   Guides and command reference
+├── examples/               Demo project and scripts
+├── logs/                   JSON logs from the last runs
+├── tests/                  Test suites and custom runner
+├── workspace/              Git-managed working copy (generated, gitignored)
+├── backup/                 File backups (gitignored)
+└── cli.js                  CLI entry point
 ```
 
 ---
 
-## Plugin Development
+## Memory and learning
 
-Create a plugin with a consistent manifest:
+Every run feeds a persistent memory layer:
 
-```javascript
+- **History** — task, status, confidence, risk, duration, and steps.
+- **Mistakes** — failures with error, file, and pipeline stage.
+- **Patterns** — success/failure signals per file and task type.
+- **Solutions** — successful solutions keyed by task for reuse.
+- **Search and similarity** — find related runs and past failures.
+- **Recommendations** — warnings and suggestions before a retry.
+- **Knowledge graph** — entities and relationships extracted across runs.
+
+```bash
+node cli.js memory
+node cli.js history
+node cli.js explain --all
+```
+
+Memory data lives in `logs/memory-*.json`; the knowledge graph lives in
+`logs/memory-knowledge.json`.
+
+---
+
+## Security
+
+DevOS ships an autonomous security reviewer with five scanning modules:
+
+| Module | File | Checks |
+|--------|------|--------|
+| Secrets | `agent/security/secrets.js` | API keys, passwords, tokens, private keys |
+| Patterns | `agent/security/patterns.js` | `eval`, `innerHTML`, injection, path traversal |
+| Dependencies | `agent/security/dependencies.js` | Unsafe packages, loose versions, install scripts |
+| Permissions | `agent/security/permissions.js` | Sensitive files, `.gitignore` compliance |
+| Vulnerabilities | `agent/security/vulnerabilities.js` | Debug logging, empty catches, common mistakes |
+
+```bash
+node cli.js security
+```
+
+Security findings influence the pipeline decision (`PASS` / `RETRY` / `ROLLBACK`).
+
+Additional safeguards:
+
+- API keys are passed through environment variables to isolated child processes,
+  never through command-line arguments.
+- The patch engine validates context lines before applying a diff, so stale hunks are
+  skipped instead of corrupting files.
+- `workspace/` isolates pipeline changes from your main working tree.
+- Execution modes add approval gates for dangerous operations.
+
+> **Warning:** DevOS executes generated code and validation commands. Use it on a
+> clean Git tree, review diffs before merging, and prefer `safe` mode on untrusted
+> repositories.
+
+---
+
+## AI providers
+
+DevOS has two provider layers.
+
+### Pipeline chain (`agent/ai/`)
+
+Patch generation tries providers in order:
+
+| Order | Provider | Requirements |
+|-------|----------|--------------|
+| 1 | `opencode` | OpenCode CLI in `PATH` (Windows/PowerShell) |
+| 2 | `direct` | `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` |
+| 3 | `fallback` | None — deterministic local patches, useful for smoke tests |
+
+The fallback produces placeholder commentary, not real AI-generated code. Configure a
+real provider for meaningful changes.
+
+### Provider abstraction (`providers/`)
+
+`providers/` exposes a standalone `generate()`, `analyze()`, `review()` interface for
+OpenAI, Anthropic, DeepSeek, and a local simulated provider. It is used by
+integrations and tests; the default pipeline uses the `agent/ai` chain above.
+
+```js
+const providers = require("./providers");
+const result = await providers.generate("prompt", "openai");
+```
+
+### Environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `ANTHROPIC_API_KEY` | Anthropic (direct chain and provider abstraction) |
+| `OPENAI_API_KEY` | OpenAI (direct chain and provider abstraction) |
+| `DEEPSEEK_API_KEY` | DeepSeek (provider abstraction) |
+| `GITHUB_TOKEN` / `GH_TOKEN` | GitHub issue and PR operations |
+| `DEVOS_ROOT` | Override the project root (normally set by `cli.js`) |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Optional Supabase REST credentials |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase server-side key (never expose to a browser) |
+| `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | Optional Supabase CLI/CI authentication |
+
+---
+
+## Plugins
+
+DevOS detects the project stack and activates matching plugins. Built-in plugins:
+`javascript`, `python`, `react`, `docker`, and `graphql`.
+
+A plugin can contribute detection rules, tools, validators, CLI commands, context
+augmenters, and prompt injections:
+
+```js
 // plugins/my-plugin.js
 module.exports = {
   name: "my-plugin",
   version: "1.0.0",
-  description: "Description",
+  description: "Support for my stack",
   detect: [".ext", "config-file", "keyword"],
-  tools: ["tool1", "tool2"],
-  rules: ["Rule 1", "Rule 2"],
+  tools: ["lint", "test"],
+  rules: ["Prefer the project error wrapper"],
 };
 ```
 
 ```bash
-node cli.js plugins info my-plugin   # view manifest
-node cli.js plugins install my-plugin
+node cli.js plugins                     # list installed
+node cli.js plugins search <query>      # search the marketplace
+node cli.js plugins install <name>      # install a plugin
+node cli.js plugins uninstall <name>    # uninstall
+node cli.js plugins info <name>         # show the manifest
 ```
+
+The marketplace ships additional entries such as `security`, `typescript`, `rust`,
+`go`, `ruby`, and `php`. See [`plugins/SKILL.md`](plugins/SKILL.md) and
+[`plugins/v2-specification.md`](plugins/v2-specification.md) for the plugin contract.
+
+---
+
+## Dashboard
+
+```bash
+node cli.js dashboard
+```
+
+Open <http://localhost:3000>. The dashboard is read-only and reads the JSON logs:
+agent state, validation results, memory totals, knowledge graph, sandbox status,
+agent timeline, and recent runs.
+
+The server binds to localhost only and has no authentication. Do not expose port 3000
+to an untrusted network.
+
+---
+
+## Sandbox
+
+The sandbox creates an isolated copy of the project (excluding `node_modules`, `.git`,
+logs, backups, and the workspace) so you can compare and validate changes separately:
+
+```bash
+node cli.js sandbox create    # copy the project into sandbox/
+node cli.js sandbox status    # state, file counts, validation
+node cli.js sandbox compare   # diff original vs sandbox
+node cli.js sandbox clean     # remove the sandbox
+```
+
+Sandbox data lives in `sandbox/` at the repository root.
 
 ---
 
 ## Configuration
 
-All settings in `config/devos.json`:
+Main configuration: [`config/devos.json`](config/devos.json).
 
-- `validator` — enable/disable syntax, git, lint, node checks
-- `tools` — enable npm, eslint, test runners
-- `memory` — history/persistence limits
-- `reasoning.confidenceThreshold` — minimum confidence to proceed (default: 0.6)
-- `reasoning.maxHealingRetries` — max retry attempts (default: 3)
-- `logging` — which JSON logs to produce
+| Key | Description |
+|-----|-------------|
+| `version`, `name` | Project metadata |
+| `editor` | Editor command used by integrations |
+| `ai.provider` | Active AI provider (`opencode`, `direct`, `fallback`) |
+| `validator.syntax`, `.git`, `.lint`, `.node` | Enable individual validators |
+| `validator.command` | Runtime check command (default `node index.js`) |
+| `validator.retry` | Maximum healing attempts |
+| `tools.npm`, `.eslint`, `.tests` | Enable tool runners |
+| `memory.enabled`, `.maxHistory`, `.maxMistakes`, `.maxPatterns`, `.maxSolutions` | Memory limits |
+| `reasoning.confidenceThreshold` | Minimum confidence to execute (default `0.6`) |
+| `reasoning.maxHealingRetries` | Retry budget (default `3`) |
+| `logging.directory` | Log directory |
+| `logging.state`, `.context`, `.execution`, `.report`, `.reasoning` | Enabled logs |
 
----
-
-## Logs
-
-| File | Description |
-|------|-------------|
-| `logs/context.json` | File list, ranking, dependency map |
-| `logs/analysis.json` | Reasoning analysis |
-| `logs/reasoning-plan.json` | Structured plan |
-| `logs/confidence.json` | Confidence score |
-| `logs/review.json` | Self-review report |
-| `logs/execution.json` | Step trace |
-| `logs/report.json` | Validator results |
-| `logs/state.json` | State machine |
-| `logs/explain.json` | Decision explanations |
-| `logs/memory-*.json` | History, mistakes, patterns, solutions |
-| `logs/ai_prompt.txt` | Last AI prompt |
+The project root is resolved from `DEVOS_ROOT`, then the repository location, so a
+clone works from any path. Execution mode lives in `logs/mode.json` (runtime state,
+gitignored) and is managed with `node cli.js mode`.
 
 ---
 
 ## Testing
 
 ```bash
+npm test
+# or
 node tests/runner.js
 ```
 
-13 test suites, 286 tests covering:
-- Patch engine (parser, apply, generate, round-trip)
-- State machine (transitions, steps, updates)
-- Memory (history, mistakes, patterns, solutions, search, similarity, recommendations)
-- Plugins (loading, detection, tools, rules)
-- CLI (output, router, command registry)
-- Similarity (tokenize, scoring)
-- Config (structure, values)
-- Agents (planner, coder, reviewer, security, orchestrator)
-- Security (secrets, patterns, dependencies, permissions, vulnerabilities)
-- GitHub (issues, PRs, API)
-- Explainability (recording, decision building, CLI format)
-- Providers (openai, anthropic, deepseek, local interface)
-- Marketplace (search, install, uninstall, manifest)
+The suite currently covers **19 test suites and 457 assertions**, all passing:
+
+- Patch engine (parser, applier, generator, round-trip)
+- State machine and execution flow
+- Memory (history, mistakes, patterns, solutions, search, similarity, knowledge graph)
+- Plugins and marketplace
+- CLI, output, and command routing
+- Config, providers, similarity, security
+- Multi-agent orchestration
+- GitHub integration and explainability
+- Approval modes, sandbox, and performance metrics
+
+The custom runner discovers every `tests/*.test.js` file and exits non-zero on failure.
+See [`tests/README.md`](tests/README.md) for the assertion API and test hygiene rules.
+
+### Runner options
+
+```bash
+node tests/runner.js --list              # list discovered suites
+node tests/runner.js --filter=config     # run matching suites only
+node tests/runner.js --bail              # stop at the first failing suite
+node tests/runner.js --isolate           # fresh require cache per suite
+node tests/runner.js --verbose           # show suite logs
+node tests/runner.js --json              # machine-readable report for CI
+node tests/runner.js --timeout=60000     # per-suite timeout (0 disables)
+```
 
 ---
 
-## Security
+## CI
 
-- **v1.2.4+:** API keys passed via environment variables to isolated Node child processes. Never in command-line arguments.
-- Patch engine validates context lines before applying to prevent file corruption from stale diffs.
-- No shell injection vectors in `direct.js` (uses `execFileSync` with env vars).
-- **v1.4.0:** Autonomous security scanner detects secrets, unsafe patterns, dependency risks, and permission issues.
+Two GitHub Actions workflows live in `.github/workflows/`:
+
+- **`ci.yml`** runs the test suite on Node 18, 20, and 22 across Ubuntu and Windows,
+  plus `npm run lint` and a runtime `npm audit` on Node 22.
+- **`supabase.yml`** validates the optional Supabase configuration on manual
+  dispatch or changes under `supabase/`. It installs the Supabase CLI, verifies
+  authentication, links the project, and pushes migrations when
+  `supabase/config.toml` and `supabase/migrations/` exist. Missing secrets produce a
+  notice and a clean skip.
+
+Add the secrets listed in [Setup and authentication](#setup-and-authentication) to
+the repository before enabling the Supabase workflow.
 
 ---
 
-## Requirements
+## Documentation
 
-- Node.js 18+
-- Git
-- PowerShell 7 (recommended)
+- [`docs/Commands.md`](docs/Commands.md) — command reference and examples
+- [`docs/Getting Started.md`](docs/Getting%20Started.md) — setup walkthrough
+- [`docs/WorkFlow.md`](docs/WorkFlow.md) — workflow notes
+- [`docs/demo.md`](docs/demo.md) — demo walkthrough
+- [`docs/WezTerm.md`](docs/WezTerm.md) — terminal setup
+- [`CHANGELOG.md`](CHANGELOG.md) — release history
 
 ---
 
-## Philosophy
+## Troubleshooting
 
-Reduce friction. Automate setup. Keep environments reproducible. Build AI-ready foundations.
+| Symptom | Fix |
+|---------|-----|
+| `git` or `node` not found | Install the requirement and rerun `node cli.js doctor` |
+| Pipeline returns placeholder comments | No AI provider configured; set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` or install the OpenCode CLI |
+| `opencode` provider not detected | Install the OpenCode CLI and ensure it is in `PATH` (Windows/PowerShell) |
+| `run` fails while patching | Ensure `workspace/` can be created; delete it and rerun, or run `node cli.js rollback` |
+| Dashboard port 3000 already in use | Stop the other process or change `PORT` in `dashboard/server.js` |
+| Workspace is dirty after a failed run | `node cli.js rollback`, or delete `workspace/` and rerun |
+| Tests fail after a change | Run `node tests/runner.js` and inspect the failing suite output |
+| Permission denied on Windows | Close editors holding the file, run from a normal terminal, and retry |
 
-> "Designed and developed an autonomous AI software engineering orchestration framework with reasoning, execution, validation, rollback, memory, multi-agent orchestration, security scanning, and explainability capabilities."
+---
+
+## Contributing
+
+1. Fork the repository and create a feature branch.
+2. Keep changes scoped and add or update tests in `tests/`.
+3. Run `npm test` before opening a pull request.
+4. Describe the behavior change, the root cause, and the verification you ran.
+
+Bug reports and pull requests are welcome at
+<https://github.com/Marcu08/DevOS>.
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+---
+
+## Credits
+
+Built as an orchestration layer for autonomous software agents. Inspired by the idea
+that AI coding tools should be accountable for the full engineering loop —
+analysis, execution, validation, memory, and explanation.

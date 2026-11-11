@@ -73,6 +73,20 @@ Example output:
 
 ---
 
+### `node cli.js setup` — Configure credentials
+
+```powershell
+node cli.js setup
+node cli.js setup --check
+node cli.js setup --non-interactive
+```
+
+Prompts for AI provider keys, a GitHub token, and optional Supabase credentials, then
+writes a gitignored `.env` file. Environment variables take precedence over `.env`.
+A missing workspace is expected on a fresh clone and is created by the first run.
+
+---
+
 ### `node cli.js validate` — Run all validators
 
 ```powershell
@@ -157,6 +171,41 @@ node cli.js explain --all              # all recent explanations
 ```
 
 Displays reasoning, confidence score, evidence, files changed, and similar solutions.
+
+---
+
+### `node cli.js mode` — Execution mode
+
+```powershell
+node cli.js mode                    # show the current mode
+node cli.js mode autonomous         # no approval gates
+node cli.js mode assisted           # approval for execution and dangerous operations
+node cli.js mode safe               # approval for every operation, sequential agents
+```
+
+The mode is persisted in `logs/mode.json`.
+
+---
+
+### `node cli.js sandbox` — Isolated sandbox
+
+```powershell
+node cli.js sandbox create          # copy the project into sandbox/
+node cli.js sandbox status          # state, file counts, validation
+node cli.js sandbox compare         # diff original vs sandbox
+node cli.js sandbox clean           # remove sandbox/
+```
+
+---
+
+### `node cli.js performance` — Performance metrics
+
+```powershell
+node cli.js performance
+```
+
+Shows total runs, average duration, cache efficiency, per-agent timings, and recent
+runs from `logs/performance-metrics.json`.
 
 ---
 
@@ -381,14 +430,14 @@ console.log(hunks.length, 'hunks found');
 ```powershell
 node -e "
 const ve = require('./agent/validator/index');
-const report = ve.validate({ modifiedFiles: ['agent/agent.js'] });
+const report = ve.validate({ modifiedFiles: ['agent/config.js'] });
 console.log('Passed:', report.summary.passed, 'Failed:', report.summary.failed);
 "
 ```
 
 ### Run single validator
 ```powershell
-node -e "require('./agent/validator/syntax').run({ modifiedFiles: ['agent/agent.js'] })"
+node -e "require('./agent/validator/syntax').run({ modifiedFiles: ['agent/config.js'] })"
 node -e "require('./agent/validator/git').run({})"
 node -e "require('./agent/validator/node').run({})"
 ```

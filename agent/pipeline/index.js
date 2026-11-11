@@ -12,6 +12,10 @@ const healing = require("./healing");
 const orchestrator = require("../../agents/orchestrator");
 
 async function run(task) {
+  // The pipeline applies patches inside workspace/, so make sure the Git-managed
+  // copy exists and starts clean before building context.
+  workspace.prepareWorkspace();
+
   state.init(task);
   state.transition("Planning");
 

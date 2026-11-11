@@ -8,20 +8,23 @@ function run(plan, context) {
 
   let score = 1.0;
 
-  if (files.length > 8) score -= 0.25;
-  else if (files.length > 4) score -= 0.10;
+  const penalties = [];
+  if (files.length > 8) penalties.push(0.25);
+  else if (files.length > 4) penalties.push(0.10);
 
-  if (complexity.functions > 30) score -= 0.20;
-  else if (complexity.functions > 15) score -= 0.10;
+  if (complexity.functions > 30) penalties.push(0.20);
+  else if (complexity.functions > 15) penalties.push(0.10);
 
-  if (plan.risk === "high") score -= 0.15;
+  if (plan.risk === "high") penalties.push(0.15);
 
-  if (files.length === 0) score -= 0.30;
+  if (files.length === 0) penalties.push(0.30);
 
   const highComplexityFiles = (context.topFiles || []).filter(f => (f.complexity?.functions || 0) > 10);
-  if (highComplexityFiles.length > 0) score -= 0.05 * Math.min(highComplexityFiles.length, 4);
+  if (highComplexityFiles.length > 0) penalties.push(0.05 * Math.min(highComplexityFiles.length, 4));
 
-  score = Math.max(0, Math.min(1, score));
+  const totalPenalty = penalties.reduce((a, b) => a + b, 0);
+  if (totalPenalty > 0.95) score = 0.05;
+  else score = Math.max(0, 1.0 - totalPenalty);
 
   const blocked = score < threshold;
 

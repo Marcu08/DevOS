@@ -5,6 +5,10 @@ const PLUGINS_DIR = __dirname;
 const MARKETPLACE_FILE = path.join(PLUGINS_DIR, "marketplace.json");
 const INSTALLED_FILE = path.join(PLUGINS_DIR, ".installed.json");
 
+const ToolsRegistry = require("./registry/tools");
+const ValidatorsRegistry = require("./registry/validators");
+const CommandsRegistry = require("./registry/commands");
+
 const DEFAULT_MARKETPLACE = [
   { name: "javascript", version: "1.0.0", description: "JavaScript project detection and tooling", url: "", capabilities: ["lint", "build"] },
   { name: "python", version: "1.0.0", description: "Python project detection and tooling", url: "", capabilities: ["lint", "test"] },
@@ -32,6 +36,9 @@ class PluginManager {
     this._active = [];
     this._loaded = false;
     this._warnings = [];
+    this._toolsRegistry = new ToolsRegistry();
+    this._validatorsRegistry = new ValidatorsRegistry();
+    this._commandsRegistry = new CommandsRegistry();
   }
 
   // ── Public API ─────────────────────────────────────────────
@@ -65,6 +72,18 @@ class PluginManager {
 
   getWarnings() {
     return this._warnings;
+  }
+
+  getToolsRegistry() {
+    return this._toolsRegistry;
+  }
+
+  getValidatorsRegistry() {
+    return this._validatorsRegistry;
+  }
+
+  getCommandsRegistry() {
+    return this._commandsRegistry;
   }
 
   // ── Detection ──────────────────────────────────────────────
@@ -117,7 +136,11 @@ class PluginManager {
     for (const entry of this._active) {
       const desc = entry.descriptor;
       if (desc.tools) {
-        for (const t of desc.tools) tools.add(t);
+        if (Array.isArray(desc.tools)) {
+          for (const t of desc.tools) tools.add(t);
+        } else if (typeof desc.tools === "object") {
+          for (const t of Object.keys(desc.tools)) tools.add(t);
+        }
       }
     }
     return [...tools];
@@ -136,12 +159,15 @@ class PluginManager {
   getManifest(pluginName) {
     const desc = this.get(pluginName);
     if (!desc) return null;
+    const caps = Array.isArray(desc.tools)
+      ? desc.tools
+      : (desc.tools && typeof desc.tools === "object" ? Object.keys(desc.tools) : []);
     return {
       name: desc.name,
       version: desc.version || "1.0.0",
       description: desc.description || "",
-      capabilities: desc.tools || [],
-      validators: desc.rules || [],
+      capabilities: caps,
+      validators: desc.validators ? Object.keys(desc.validators) : (desc.rules || []),
       detect: desc.detect || [],
     };
   }
@@ -228,6 +254,9 @@ class PluginManager {
     this._registry.clear();
     this._active = [];
     this._warnings = [];
+    this._toolsRegistry = new ToolsRegistry();
+    this._validatorsRegistry = new ValidatorsRegistry();
+    this._commandsRegistry = new CommandsRegistry();
     this._ensureLoaded();
   }
 
@@ -253,6 +282,8 @@ class PluginManager {
         }
 
         this._registry.set(desc.name, { descriptor: desc, file: file.path, isV1 });
+
+        this._registerCapabilities(desc);
       } catch (e) {
         this._warnings.push(`Failed to load ${file.name}: ${e.message}`);
       }
@@ -307,11 +338,21 @@ class PluginManager {
         }
       }
     }
-    if (desc.tools !== undefined && !Array.isArray(desc.tools)) {
-      errors.push("'tools' must be an array");
+    if (desc.tools !== undefined && !Array.isArray(desc.tools) && typeof desc.tools !== "object") {
+      errors.push("'tools' must be an array (v1) or object (v2)");
     }
     if (desc.rules !== undefined && !Array.isArray(desc.rules)) {
       errors.push("'rules' must be an array");
+    }
+    if (desc.validators !== undefined) {
+      if (typeof desc.validators !== "object") {
+        errors.push("'validators' must be an object");
+      }
+    }
+    if (desc.commands !== undefined) {
+      if (typeof desc.commands !== "object") {
+        errors.push("'commands' must be an object");
+      }
     }
     if (desc.contextAugmenters !== undefined) {
       if (!Array.isArray(desc.contextAugmenters)) {
@@ -335,6 +376,29 @@ class PluginManager {
 
   _isV1Plugin(desc) {
     return !desc.contextAugmenters && !desc.promptInjectors && !desc.hooks;
+  }
+
+  _registerCapabilities(desc) {
+    // Register v2-format tools (object with {name: {description, run}})
+    if (desc.tools && typeof desc.tools === "object" && !Array.isArray(desc.tools)) {
+      for (const [toolName, toolDef] of Object.entries(desc.tools)) {
+        this._toolsRegistry.register(toolName, toolDef, desc.name);
+      }
+    }
+
+    // Register validators
+    if (desc.validators && typeof desc.validators === "object") {
+      for (const [valName, valDef] of Object.entries(desc.validators)) {
+        this._validatorsRegistry.register(valName, valDef, desc.name);
+      }
+    }
+
+    // Register commands
+    if (desc.commands && typeof desc.commands === "object") {
+      for (const [cmdName, cmdDef] of Object.entries(desc.commands)) {
+        this._commandsRegistry.register(cmdName, cmdDef, desc.name);
+      }
+    }
   }
 }
 

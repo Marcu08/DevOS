@@ -4,7 +4,7 @@ const DEVOS = require("./config");
 
 const TRANSITIONS = {
   Idle: ["Planning"],
-  Planning: ["Executing"],
+  Planning: ["Executing", "Failed"],
   Executing: ["Validating", "Rollback", "Failed"],
   Validating: ["Completed", "Failed", "Executing"],
   Failed: ["Rollback"],

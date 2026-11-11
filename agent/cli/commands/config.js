@@ -1,5 +1,6 @@
 const out = require("../output");
 const DEVOS = require("../../config");
+const approval = require("../../approval/index");
 
 function handler() {
   out.banner("DevOS Configuration");
@@ -7,11 +8,11 @@ function handler() {
   const rows = [
     ["Version", cfg.version],
     ["Name", cfg.name],
-    ["Root", cfg.root],
-    ["Workspace", cfg.workspace],
-    ["Editor", cfg.editor],
+    ["Root", DEVOS.root],
+    ["Workspace", DEVOS.workspace],
+    ["Editor", cfg.editor || "-"],
     ["AI Provider", cfg.ai?.provider || "none"],
-    ["Safe Mode", cfg.safeMode ? `${out.colorize("enabled", "green")}` : `${out.colorize("disabled", "yellow")}`],
+    ["Execution Mode", approval.current()],
   ];
   out.table(rows);
   console.log("");

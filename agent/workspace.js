@@ -1,47 +1,21 @@
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
 const DEVOS = require("./config");
-
-function git(cmd, cwd = DEVOS.workspace) {
-  return execSync(`git ${cmd}`, { encoding: "utf-8", cwd });
-}
-
-function getFiles(dir, max = 15) {
-  let results = [];
-  function walk(d) {
-    if (results.length >= max) return;
-    const entries = fs.readdirSync(d);
-    for (const e of entries) {
-      const full = path.join(d, e);
-      if (full.includes("node_modules") || full.includes(".git")) continue;
-      const stat = fs.statSync(full);
-      if (stat.isDirectory()) {
-        walk(full);
-      } else {
-        results.push(full);
-      }
-      if (results.length >= max) return;
-    }
-  }
-  walk(dir);
-  return results;
-}
+const { git } = require("./util/git");
+const { getFiles } = require("./util/scanner");
 
 function prepareWorkspace() {
-  const skip = [DEVOS.workspace, path.join(DEVOS.root, ".git"), path.join(DEVOS.root, "node_modules"), path.join(DEVOS.root, "backup"), path.join(DEVOS.root, "backups")];
+  const skip = [DEVOS.workspace, path.join(DEVOS.root, ".git"), path.join(DEVOS.root, "node_modules"), path.join(DEVOS.root, "backup"), path.join(DEVOS.root, "backups"), path.join(DEVOS.root, "logs"), path.join(DEVOS.root, "sandbox")];
 
-  if (fs.existsSync(path.join(DEVOS.workspace, ".git"))) {
-    try { git("checkout main 2>nul || git checkout master 2>nul"); } catch {}
-    try { git("reset --hard HEAD"); } catch {}
-    try { git("clean -fd"); } catch {}
-    return;
-  }
-
+  // Rebuild the working copy from the current project files. Reusing an
+  // existing workspace would let stale files from a previous run leak into the
+  // next one.
   fs.rmSync(DEVOS.workspace, { recursive: true, force: true });
   fs.mkdirSync(DEVOS.workspace, { recursive: true });
 
-  const files = getFiles(DEVOS.root, 30);
+  // Match the context scanner's file budget so files the AI can target are
+  // actually present in the workspace.
+  const files = getFiles(DEVOS.root, 200);
 
   for (const f of files) {
     if (skip.some(s => f.startsWith(s))) continue;

@@ -1,19 +1,11 @@
-const { execSync } = require("child_process");
 const DEVOS = require("../config");
+const { gitSafe } = require("../util/git");
 
 function run(context) {
   const start = Date.now();
 
-  function git(cmd) {
-    try {
-      return execSync(`git ${cmd}`, { cwd: DEVOS.workspace, encoding: "utf-8", stdio: "pipe" });
-    } catch {
-      return "";
-    }
-  }
-
-  const branch = git("rev-parse --abbrev-ref HEAD").trim();
-  const status = git("status --porcelain").trim();
+  const branch = gitSafe("rev-parse --abbrev-ref HEAD").trim();
+  const status = gitSafe("status --porcelain").trim();
   const hasConflicts = status.includes("UU ");
 
   const data = {

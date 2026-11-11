@@ -116,8 +116,11 @@ function explain(entryId) {
   const entry = data.entries.find(e => e.id === entryId);
   if (!entry) return null;
   const rels = data.relationships.filter(r => r.from === entryId || r.to === entryId);
+  const seen = new Set();
   const related = rels.map(r => {
     const otherId = r.from === entryId ? r.to : r.from;
+    if (seen.has(otherId)) return null;
+    seen.add(otherId);
     return data.entries.find(e => e.id === otherId);
   }).filter(Boolean);
   return { entry, relationships: rels, relatedEntries: related };

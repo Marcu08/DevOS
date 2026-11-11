@@ -19,7 +19,7 @@ Install the following tools:
 ## 2. Clone repository
 
 ```bash
-git clone https://github.com/<your-username>/DevOS.git
+git clone https://github.com/Marcu08/DevOS.git
 cd DevOS
 ```
 
@@ -28,7 +28,9 @@ cd DevOS
 ## 3. Verify setup
 
 ```bash
+npm ci
 node cli.js doctor
+node cli.js setup     # optional: configure AI/GitHub/Supabase credentials
 ```
 
 ---

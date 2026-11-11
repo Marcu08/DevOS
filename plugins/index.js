@@ -44,4 +44,7 @@ module.exports = {
   publish,
   checkCompatibility,
   getInstalled,
+  getToolsRegistry: () => getInstance().getToolsRegistry(),
+  getValidatorsRegistry: () => getInstance().getValidatorsRegistry(),
+  getCommandsRegistry: () => getInstance().getCommandsRegistry(),
 };
