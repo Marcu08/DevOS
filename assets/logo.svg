@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="devosTitle devosDesc">
+  <title id="devosTitle">DevOS logo</title>
+  <desc id="devosDesc">A geometric D monogram made of circuit nodes and orbital lines.</desc>
+
+  <defs>
+    <linearGradient id="devosBackground" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1224"/>
+      <stop offset="0.55" stop-color="#080B14"/>
+      <stop offset="1" stop-color="#04050A"/>
+    </linearGradient>
+
+    <linearGradient id="devosAccent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00FFF7"/>
+      <stop offset="0.55" stop-color="#28B8FF"/>
+      <stop offset="1" stop-color="#FF2E97"/>
+    </linearGradient>
+
+    <radialGradient id="devosCore" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0" stop-color="#00FFF7" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#00FFF7" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="devosGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="256" height="256" rx="58" fill="url(#devosBackground)"/>
+  <rect x="1.5" y="1.5" width="253" height="253" rx="56.5" fill="none" stroke="#1C2B4A" stroke-width="3"/>
+  <rect width="256" height="256" rx="58" fill="url(#devosCore)"/>
+
+  <g stroke="#18233A" stroke-width="1" opacity="0.75">
+    <path d="M28 72h200M28 128h200M28 184h200"/>
+    <path d="M72 28v200M128 28v200M184 28v200"/>
+  </g>
+
+  <ellipse cx="128" cy="128" rx="94" ry="54" fill="none" stroke="#00FFF7" stroke-opacity="0.22" stroke-width="2" transform="rotate(-28 128 128)"/>
+  <ellipse cx="128" cy="128" rx="104" ry="64" fill="none" stroke="#FF2E97" stroke-opacity="0.12" stroke-width="2" transform="rotate(24 128 128)"/>
+
+  <path d="M78 62h34c44 0 72 27 72 66s-28 66-72 66H78V62Z"
+        fill="none" stroke="url(#devosAccent)" stroke-width="14"
+        stroke-linejoin="round" filter="url(#devosGlow)"/>
+  <path d="M78 96h32c26 0 42 13 42 32s-16 32-42 32H78"
+        fill="none" stroke="#080C16" stroke-width="9" stroke-linecap="round"/>
+
+  <g stroke="#00FFF7" stroke-width="3" stroke-linecap="round" opacity="0.85">
+    <path d="M78 62 48 32"/>
+    <path d="M78 194 48 224"/>
+    <path d="M184 128 224 128"/>
+  </g>
+
+  <g fill="#00FFF7">
+    <circle cx="78" cy="62" r="7"/>
+    <circle cx="78" cy="194" r="7"/>
+    <circle cx="184" cy="128" r="7"/>
+  </g>
+
+  <g fill="#FF2E97">
+    <circle cx="144" cy="96" r="5"/>
+    <circle cx="144" cy="160" r="5"/>
+    <circle cx="48" cy="32" r="4"/>
+    <circle cx="48" cy="224" r="4"/>
+    <circle cx="224" cy="128" r="4"/>
+  </g>
+</svg>

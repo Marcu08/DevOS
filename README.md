@@ -1,8 +1,13 @@
-# DevOS
+<p align="center">
+  <img src="assets/logo.svg" alt="DevOS logo" width="140" height="140">
+</p>
 
-**Autonomous AI software engineering orchestration framework.**
+<h1 align="center">DevOS</h1>
 
-`Analyze → Plan → Modify → Validate → Remember → Explain`
+<p align="center">
+  <strong>Autonomous AI software engineering orchestration framework.</strong><br>
+  <code>Analyze → Plan → Modify → Validate → Remember → Explain</code>
+</p>
 
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
