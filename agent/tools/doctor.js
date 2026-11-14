@@ -1,33 +1,51 @@
-const { execSync } = require("child_process");
+const { execFile } = require("child_process");
+const { promisify } = require("util");
 const DEVOS = require("../config");
 
-function run() {
-  const results = [];
+const execFileAsync = promisify(execFile);
 
+function npmCheck() {
+  if (process.platform === "win32") {
+    // Node cannot spawn .cmd files directly without a shell. cmd.exe avoids the
+    // deprecated shell + args combination while still resolving npm.cmd.
+    return {
+      command: process.env.ComSpec || "cmd.exe",
+      args: ["/d", "/s", "/c", "npm --version"],
+    };
+  }
+  return { command: "npm", args: ["--version"] };
+}
+
+async function checkOne(check) {
+  try {
+    const { stdout } = await execFileAsync(check.command, check.args, {
+      cwd: check.cwd || DEVOS.root,
+      encoding: "utf-8",
+      timeout: 15000,
+      windowsHide: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return { name: check.name, status: "ok", version: stdout.trim() };
+  } catch {
+    // A missing workspace is expected on a fresh clone: it is created by the
+    // first pipeline run. Do not fail the health check for it.
+    if (check.optional) {
+      return { name: check.name, status: "ok", version: "not initialized (created on first run)" };
+    }
+    return { name: check.name, status: "missing" };
+  }
+}
+
+async function run() {
   const checks = [
-    { name: "git", cmd: "git --version" },
-    { name: "node", cmd: "node --version" },
-    { name: "npm", cmd: "npm --version" },
-    { name: "workspace", cmd: "git rev-parse --abbrev-ref HEAD", cwd: DEVOS.workspace, optional: true },
+    { name: "git", command: "git", args: ["--version"] },
+    { name: "node", command: process.execPath, args: ["--version"] },
+    { name: "npm", ...npmCheck() },
+    { name: "workspace", command: "git", args: ["rev-parse", "--abbrev-ref", "HEAD"], cwd: DEVOS.workspace, optional: true },
   ];
 
-  for (const check of checks) {
-    try {
-      const out = execSync(check.cmd, { encoding: "utf-8", cwd: check.cwd || DEVOS.root, stdio: "pipe" });
-      results.push({ name: check.name, status: "ok", version: out.trim() });
-    } catch {
-      // A missing workspace is expected on a fresh clone: it is created by the
-      // first pipeline run. Do not fail the health check for it.
-      if (check.optional) {
-        results.push({ name: check.name, status: "ok", version: "not initialized (created on first run)" });
-      } else {
-        results.push({ name: check.name, status: "missing" });
-      }
-    }
-  }
-
-  const allOk = results.every(r => r.status === "ok");
-  return { ok: allOk, checks: results };
+  const results = await Promise.all(checks.map(checkOne));
+  return { ok: results.every((result) => result.status === "ok"), checks: results };
 }
 
 module.exports = { run };

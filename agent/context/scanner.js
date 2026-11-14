@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const DEVOS = require("../config");
 
-const IGNORE_PATTERNS = ["node_modules", ".git", "workspace", "repo", "backup"];
+const IGNORE_PATTERNS = ["node_modules", ".git", "workspace", "repo", "backup", "logs", "sandbox", ".env"];
 
 function scanRepo(dir = DEVOS.root, maxFiles = 200) {
   const files = [];

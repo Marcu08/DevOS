@@ -11,6 +11,7 @@
     "setup": "node scripts/setup.js",
     "postinstall": "node scripts/setup.js --notice",
     "test": "node tests/runner.js",
+    "bench": "node scripts/bench.js",
     "doctor": "node cli.js doctor",
     "lint": "knip"
   },

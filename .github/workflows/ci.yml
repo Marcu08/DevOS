@@ -55,3 +55,22 @@ jobs:
 
       - name: Audit runtime dependencies
         run: npm audit --omit=dev
+
+  bench:
+    name: Startup benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --omit=dev
+
+      - name: Run benchmark thresholds
+        run: npm run bench -- --check

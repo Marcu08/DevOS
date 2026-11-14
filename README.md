@@ -499,6 +499,7 @@ const result = await providers.generate("prompt", "openai");
 | `DEEPSEEK_API_KEY` | DeepSeek (provider abstraction) |
 | `GITHUB_TOKEN` / `GH_TOKEN` | GitHub issue and PR operations |
 | `DEVOS_ROOT` | Override the project root (normally set by `cli.js`) |
+| `DEVOS_NO_CACHE` | Set to `1` to bypass the context cache |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Optional Supabase REST credentials |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase server-side key (never expose to a browser) |
 | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | Optional Supabase CLI/CI authentication |
@@ -603,7 +604,7 @@ npm test
 node tests/runner.js
 ```
 
-The suite currently covers **19 test suites and 457 assertions**, all passing:
+The suite currently covers **20 test suites and 466 assertions**, all passing:
 
 - Patch engine (parser, applier, generator, round-trip)
 - State machine and execution flow
@@ -630,6 +631,18 @@ node tests/runner.js --json              # machine-readable report for CI
 node tests/runner.js --timeout=60000     # per-suite timeout (0 disables)
 ```
 
+### Benchmarks
+
+```bash
+npm run bench               # report startup and context timings
+npm run bench -- --check    # fail when a threshold is exceeded
+```
+
+The benchmark measures `help`, `config`, `mode`, cold context build, and warm
+context build. CI runs the threshold check on Node 22. Context results are cached in
+`logs/cache/` and reused while file `mtime`/size fingerprints are unchanged; set
+`DEVOS_NO_CACHE=1` to bypass the cache.
+
 ---
 
 ## CI
@@ -637,7 +650,8 @@ node tests/runner.js --timeout=60000     # per-suite timeout (0 disables)
 Two GitHub Actions workflows live in `.github/workflows/`:
 
 - **`ci.yml`** runs the test suite on Node 18, 20, and 22 across Ubuntu and Windows,
-  plus `npm run lint` and a runtime `npm audit` on Node 22.
+  plus `npm run lint` and a runtime `npm audit` on Node 22, and a startup benchmark
+  threshold check on Node 22.
 - **`supabase.yml`** validates the optional Supabase configuration on manual
   dispatch or changes under `supabase/`. It installs the Supabase CLI, verifies
   authentication, links the project, and pushes migrations when

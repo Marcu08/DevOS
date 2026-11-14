@@ -11,9 +11,14 @@
 - GitHub Actions CI for Node 18/20/22 on Ubuntu and Windows
 - Optional Supabase workflow with a clean skip when secrets are missing
 - Test runner options: `--filter`, `--timeout`, `--bail`, `--list`, `--json`, `--verbose`, `--quiet`, `--isolate`
+- Startup benchmark (`npm run bench`) with CI threshold checks
+- Context cache keyed by file `mtime`/size fingerprints (`DEVOS_NO_CACHE=1` bypasses it)
 
 ### Changed
 - CLI commands are loaded lazily; `help` no longer loads the pipeline, GitHub, or security engines
+- Context build reads each file once instead of three times
+- `doctor` runs its checks in parallel
+- Workspace Git uses a local identity and quiet output, avoiding CRLF warnings
 - README rewritten with accurate commands, installation, execution modes, architecture, providers, and troubleshooting
 - The Git-managed workspace is rebuilt from current project files on every run (up to 200 files)
 - Package identity is now `@marcu08/devos` with the `devos` binary
@@ -27,6 +32,7 @@
 - Removed hardcoded `root`/`workspace` values from `config/devos.json`
 - `doctor` no longer fails on a fresh clone without `workspace/`
 - Marketplace tests no longer leave `test-plugin` behind
+- Cache filenames are filesystem-safe on Windows (no NTFS alternate data streams)
 
 ### Removed
 - Unused `agent/patch-engine/matcher.js` and `agent/util/index.js`

@@ -2,7 +2,11 @@ const { execSync } = require("child_process");
 const DEVOS = require("../config");
 
 function git(cmd, cwd = DEVOS.workspace) {
-  return execSync(`git ${cmd}`, { encoding: "utf-8", cwd });
+  return execSync(`git ${cmd}`, {
+    encoding: "utf-8",
+    cwd,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
 }
 
 function gitSafe(cmd, cwd = DEVOS.workspace) {

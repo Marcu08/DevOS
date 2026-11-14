@@ -21,7 +21,10 @@ function fileHash(filePath) {
 }
 
 function getCacheKey(type, key) {
-  return `${type}:${hash(key)}`;
+  // Windows does not allow ":" in filenames (it creates an NTFS alternate data
+  // stream), so use a filesystem-safe separator.
+  const safeType = String(type).replace(/[^a-z0-9_-]/gi, "-");
+  return `${safeType}-${hash(key)}`;
 }
 
 function get(type, key) {

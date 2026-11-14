@@ -25,9 +25,12 @@ function prepareWorkspace() {
     fs.copyFileSync(f, dest);
   }
 
-  git("init");
-  git("add .");
-  git('commit -m "init workspace" --allow-empty');
+  git("init -q");
+  git("config core.autocrlf false");
+  git("config user.name DevOS");
+  git("config user.email devos@localhost");
+  git("add -A");
+  git('commit -q -m "init workspace" --allow-empty');
 }
 
 function createAgentBranch(taskName) {
