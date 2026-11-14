@@ -547,6 +547,12 @@ The marketplace ships additional entries such as `security`, `typescript`, `rust
 node cli.js dashboard
 ```
 
+<p align="center">
+  <img src="assets/dashboard.png" alt="DevOS dashboard preview" width="820">
+</p>
+
+_<small>Preview with demo data.</small>_
+
 Open <http://localhost:3000>. The dashboard is read-only and reads the JSON logs:
 agent state, validation results, memory totals, knowledge graph, sandbox status,
 agent timeline, and recent runs.
@@ -588,6 +594,7 @@ Main configuration: [`config/devos.json`](config/devos.json).
 | `memory.enabled`, `.maxHistory`, `.maxMistakes`, `.maxPatterns`, `.maxSolutions` | Memory limits |
 | `reasoning.confidenceThreshold` | Minimum confidence to execute (default `0.6`) |
 | `reasoning.maxHealingRetries` | Retry budget (default `3`) |
+| `workspace.maxFiles` | Maximum files copied into the Git-managed workspace (default `200`) |
 | `logging.directory` | Log directory |
 | `logging.state`, `.context`, `.execution`, `.report`, `.reasoning` | Enabled logs |
 
@@ -608,7 +615,7 @@ node tests/runner.js
 npm run test:coverage
 ```
 
-The suite currently covers **23 test suites and 511 assertions**, all passing:
+The suite currently covers **23 test suites and 526 assertions**, all passing:
 
 - Patch engine (parser, applier, generator, round-trip)
 - State machine and execution flow
@@ -674,6 +681,7 @@ the repository before enabling the Supabase workflow.
 - [`docs/workflow.md`](docs/workflow.md) — workflow notes
 - [`docs/demo.md`](docs/demo.md) — demo walkthrough
 - [`docs/WezTerm.md`](docs/WezTerm.md) — terminal setup
+- [`dotfiles/README.md`](dotfiles/README.md) — optional personal configuration
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — development and pull request guide
 - [`SECURITY.md`](SECURITY.md) — security policy and secret handling
 - [`CHANGELOG.md`](CHANGELOG.md) — release history

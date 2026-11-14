@@ -18,18 +18,37 @@ const DANGEROUS_PATTERNS = [
 ];
 
 const MODE_FILE = path.join(DEVOS.logs, "mode.json");
+const LEGACY_MODE_FILE = path.join(DEVOS.root, "config", "mode.json");
 
 function getModeDir() {
   return path.dirname(MODE_FILE);
 }
 
-function current() {
+function readMode(file) {
   try {
-    const data = JSON.parse(fs.readFileSync(MODE_FILE, "utf-8"));
-    return MODES[data.mode] ? data.mode : "autonomous";
+    const data = JSON.parse(fs.readFileSync(file, "utf-8"));
+    return MODES[data.mode] ? data.mode : null;
   } catch {
-    return "autonomous";
+    return null;
   }
+}
+
+function migrateLegacyMode() {
+  const legacy = readMode(LEGACY_MODE_FILE);
+  if (!legacy) return null;
+
+  try {
+    fs.mkdirSync(getModeDir(), { recursive: true });
+    fs.writeFileSync(MODE_FILE, JSON.stringify({ mode: legacy, updated: new Date().toISOString() }, null, 2));
+  } catch {
+    // Migration is best-effort; the legacy value is still returned.
+  }
+
+  return legacy;
+}
+
+function current() {
+  return readMode(MODE_FILE) || migrateLegacyMode() || "autonomous";
 }
 
 function setMode(mode) {

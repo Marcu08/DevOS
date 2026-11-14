@@ -47,4 +47,11 @@ module.exports = function test(assert) {
   // available() still works
   const available = plugins.available();
   assert.ok(available.length >= 4, "should have at least 4 plugins available");
+
+  // Marketplace entries should link somewhere real
+  const marketplace = require("../plugins/marketplace.json");
+  assert.ok(marketplace.length >= 10, "marketplace should list at least 10 entries");
+  for (const entry of marketplace) {
+    assert.ok(typeof entry.url === "string" && entry.url.startsWith("https://"), `${entry.name} should have an https URL`);
+  }
 };

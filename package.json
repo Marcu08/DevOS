@@ -1,11 +1,44 @@
 {
   "name": "@marcu08/devos",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Autonomous AI software engineering orchestration framework",
   "license": "MIT",
+  "author": "Marcu",
+  "homepage": "https://github.com/Marcu08/DevOS#readme",
+  "bugs": {
+    "url": "https://github.com/Marcu08/DevOS/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marcu08/DevOS.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "devos": "./cli.js"
   },
+  "files": [
+    "agent/",
+    "agents/",
+    "providers/",
+    "plugins/",
+    "dashboard/",
+    "config/",
+    "scripts/",
+    "docs/",
+    "dotfiles/",
+    "assets/",
+    "examples/",
+    "cli.js",
+    "version.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    ".env.example"
+  ],
   "scripts": {
     "start": "node cli.js",
     "setup": "node scripts/setup.js",

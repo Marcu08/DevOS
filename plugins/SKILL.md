@@ -513,19 +513,19 @@ or `loaded` is set to `null`.
 }
 ```
 
-## Architecture Status (v2.0.0)
+## Architecture Status
 
-The Plugin Framework v2.0.0 introduces the PluginManager, extension
+The plugin framework introduces the PluginManager, extension
 registries, context augmenters, and prompt injectors. The following
 gaps remain for future releases:
 
-### Gap 1: Plugin-driven tools (v2.0.0 — Partial)
+### Gap 1: Plugin-driven tools (Partial)
 
 **Status:** ToolsRegistry exists as an abstraction layer. Plugin
 tools can be registered, but the executor does not yet use them
 automatically. Plugin tool registration is API-ready for future use.
 
-### Gap 2: Plugin-driven validators (v2.0.0 — Partial)
+### Gap 2: Plugin-driven validators (Partial)
 
 **Status:** ValidatorsRegistry exists with plugin validator support.
 Plugin validators run after built-in validators during validation.
@@ -558,7 +558,7 @@ config file has no `plugins` section.
 
 ### Gap 5: Plugin data directories
 
-**Status:** v2.0.0 supports both `plugins/name.js` and
+**Status:** The plugin manager supports both `plugins/name.js` and
 `plugins/name/index.js` formats. Directory plugins can include
 assets, sub-modules, and templates.
 

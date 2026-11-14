@@ -34,6 +34,29 @@ module.exports = function test(assert) {
   approval.setMode("autonomous");
   assert.equal(approval.current(), "autonomous", "mode should restore to autonomous");
 
+  // Legacy mode migration: config/mode.json -> logs/mode.json
+  const fs = require("fs");
+  const path = require("path");
+  const DEVOS = require("../agent/config");
+  const logsMode = path.join(DEVOS.logs, "mode.json");
+  const legacyMode = path.join(DEVOS.root, "config", "mode.json");
+  const logsBackup = fs.existsSync(logsMode) ? fs.readFileSync(logsMode, "utf-8") : null;
+  const legacyBackup = fs.existsSync(legacyMode) ? fs.readFileSync(legacyMode, "utf-8") : null;
+
+  try {
+    try { fs.unlinkSync(logsMode); } catch {}
+    fs.mkdirSync(path.dirname(legacyMode), { recursive: true });
+    fs.writeFileSync(legacyMode, JSON.stringify({ mode: "assisted" }), "utf-8");
+    assert.equal(approval.current(), "assisted", "legacy mode should be migrated");
+    assert.ok(fs.existsSync(logsMode), "migrated mode should be written to logs");
+  } finally {
+    if (logsBackup === null) { try { fs.unlinkSync(logsMode); } catch {} }
+    else fs.writeFileSync(logsMode, logsBackup, "utf-8");
+    if (legacyBackup === null) { try { fs.unlinkSync(legacyMode); } catch {} }
+    else fs.writeFileSync(legacyMode, legacyBackup, "utf-8");
+    approval.setMode("autonomous");
+  }
+
   // Autonomous mode
   const autoNeeds = approval.needsApproval("execute", []);
   assert.ok(autoNeeds.required === false, "autonomous mode should not require approval");

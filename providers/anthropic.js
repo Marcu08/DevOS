@@ -1,27 +1,19 @@
-const https = require("https");
+const { request } = require("./http");
 
 const BASE = "api.anthropic.com";
 
 function apiRequest(payload) {
-  return new Promise((resolve) => {
-    const key = process.env.ANTHROPIC_API_KEY;
-    if (!key) return resolve(null);
-    const data = JSON.stringify(payload);
-    const opts = {
-      hostname: BASE, path: "/v1/messages", method: "POST",
-      headers: {
-        "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
-        "Content-Length": Buffer.byteLength(data),
-      },
-    };
-    const req = https.request(opts, (res) => {
-      let body = "";
-      res.on("data", c => body += c);
-      res.on("end", () => { try { resolve(JSON.parse(body)); } catch { resolve(null); } });
-    });
-    req.on("error", () => resolve(null));
-    req.write(data);
-    req.end();
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return Promise.resolve(null);
+
+  return request({
+    hostname: BASE,
+    path: "/v1/messages",
+    headers: {
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    },
+    payload,
   });
 }
 

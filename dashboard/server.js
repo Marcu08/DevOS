@@ -28,7 +28,7 @@ function apiData() {
     knowledge: loadJSON(path.join(logsDir, "memory-knowledge.json")),
     explain: loadJSON(path.join(logsDir, "explain.json")),
     performance: loadJSON(path.join(logsDir, "performance-metrics.json")),
-    sandbox: loadJSON(path.join(path.join(__dirname, "..", "sandbox"), "status.json")),
+    sandbox: loadJSON(path.join(__dirname, "..", "sandbox", "status.json")),
     cache: loadJSON(path.join(logsDir, "cache", "metrics.json")),
     agents: state?.agents || null,
   };

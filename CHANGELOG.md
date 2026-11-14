@@ -1,6 +1,10 @@
 # DevOS Changelog
 
-## Unreleased
+## v2.1.0 — PERFORMANCE, ROBUSTNESS & POLISH (2026-11-14)
+
+Faster CLI startup, a cached single-pass context engine, cross-platform OpenCode
+support, real coverage, a startup benchmark, unified validation modules, and a
+product-ready package with documentation and CI.
 
 ### Added
 - Portable project root resolution: `DEVOS_ROOT` or the repository location, with no machine-specific paths
@@ -15,6 +19,11 @@
 - Context cache keyed by file `mtime`/size fingerprints (`DEVOS_NO_CACHE=1` bypasses it)
 - `providers` CLI command for the standalone AI provider API
 - Coverage via c8 (`npm run test:coverage`) and a CI coverage job
+- Configurable workspace file limit (`workspace.maxFiles`)
+- Dashboard screenshot in the README
+- npm package metadata (`files`, `homepage`, `bugs`, `author`, `publishConfig`)
+- Real URLs for marketplace entries
+- `dotfiles/` for optional WezTerm, PowerShell, and Starship configuration
 
 ### Changed
 - CLI commands are loaded lazily; `help` no longer loads the pipeline, GitHub, or security engines
@@ -39,11 +48,14 @@
 - Marketplace tests no longer leave `test-plugin` behind
 - Cache filenames are filesystem-safe on Windows (no NTFS alternate data streams)
 - Removed the Node `DEP0190` warning from the OpenCode launcher
+- Migrates the legacy `config/mode.json` to `logs/mode.json` on first read
 
 ### Removed
 - `agent/context.js` (use `agent/context/index`)
 - `agent/validator.js` (moved to `agent/validator/plan.js`)
 - Unused `agent/patch-engine/matcher.js` and `agent/util/index.js`
+- Duplicate empty `LICENSE.txt`
+- Empty `capabilities/` and `templates/` directories
 
 ### Docs
 - Added `mode`, `sandbox`, `performance`, `providers`, and `setup` to `docs/Commands.md`

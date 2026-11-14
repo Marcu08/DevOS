@@ -5,7 +5,15 @@ const { git } = require("./util/git");
 const { getFiles } = require("./util/scanner");
 
 function prepareWorkspace() {
-  const skip = [DEVOS.workspace, path.join(DEVOS.root, ".git"), path.join(DEVOS.root, "node_modules"), path.join(DEVOS.root, "backup"), path.join(DEVOS.root, "backups"), path.join(DEVOS.root, "logs"), path.join(DEVOS.root, "sandbox")];
+  const skip = [
+    DEVOS.workspace,
+    path.join(DEVOS.root, ".git"),
+    path.join(DEVOS.root, "node_modules"),
+    path.join(DEVOS.root, "backup"),
+    path.join(DEVOS.root, "backups"),
+    path.join(DEVOS.root, "logs"),
+    path.join(DEVOS.root, "sandbox"),
+  ];
 
   // Rebuild the working copy from the current project files. Reusing an
   // existing workspace would let stale files from a previous run leak into the
@@ -14,8 +22,10 @@ function prepareWorkspace() {
   fs.mkdirSync(DEVOS.workspace, { recursive: true });
 
   // Match the context scanner's file budget so files the AI can target are
-  // actually present in the workspace.
-  const files = getFiles(DEVOS.root, 200);
+  // actually present in the workspace. The limit is configurable.
+  const configuredLimit = Number(DEVOS.config.workspace?.maxFiles);
+  const limit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 200;
+  const files = getFiles(DEVOS.root, limit);
 
   for (const f of files) {
     if (skip.some(s => f.startsWith(s))) continue;

@@ -3,60 +3,60 @@
     "name": "javascript",
     "version": "1.0.0",
     "description": "JavaScript project detection and tooling",
-    "url": ""
+    "url": "https://github.com/Marcu08/DevOS/blob/main/plugins/javascript.js"
   },
   {
     "name": "python",
     "version": "1.0.0",
     "description": "Python project detection and tooling",
-    "url": ""
+    "url": "https://github.com/Marcu08/DevOS/blob/main/plugins/python.js"
   },
   {
     "name": "react",
     "version": "1.0.0",
     "description": "React project detection and tooling",
-    "url": ""
+    "url": "https://github.com/Marcu08/DevOS/blob/main/plugins/react.js"
   },
   {
     "name": "docker",
     "version": "1.0.0",
     "description": "Docker project detection and tooling",
-    "url": ""
+    "url": "https://github.com/Marcu08/DevOS/blob/main/plugins/docker.js"
   },
   {
     "name": "security",
     "version": "1.0.0",
     "description": "Enhanced security scanning rules and tools",
-    "url": ""
+    "url": "https://owasp.org/www-project-top-ten/"
   },
   {
     "name": "typescript",
     "version": "1.0.0",
     "description": "TypeScript project detection and tooling",
-    "url": ""
+    "url": "https://www.typescriptlang.org/"
   },
   {
     "name": "rust",
     "version": "1.0.0",
     "description": "Rust project detection and tooling",
-    "url": ""
+    "url": "https://www.rust-lang.org/"
   },
   {
     "name": "go",
     "version": "1.0.0",
     "description": "Go project detection and tooling",
-    "url": ""
+    "url": "https://go.dev/"
   },
   {
     "name": "ruby",
     "version": "1.0.0",
     "description": "Ruby project detection and tooling",
-    "url": ""
+    "url": "https://www.ruby-lang.org/"
   },
   {
     "name": "php",
     "version": "1.0.0",
     "description": "PHP project detection and tooling",
-    "url": ""
+    "url": "https://www.php.net/"
   }
 ]

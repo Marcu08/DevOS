@@ -26,4 +26,4 @@ WezTerm is the recommended terminal for DevOS.
 | `CTRL + ALT + 2` | Portfolio workspace |
 | `CTRL + ALT + 3` | Team project |
 
-The reference configuration is in `config/wezterm.lua`.
+The reference configuration is in `dotfiles/wezterm.lua`.

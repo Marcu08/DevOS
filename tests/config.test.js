@@ -21,4 +21,5 @@ module.exports = function test(assert) {
   assert.ok(cfg.reasoning !== undefined, "config should have reasoning settings");
   assert.ok(cfg.reasoning.confidenceThreshold !== undefined, "config should have confidenceThreshold");
   assert.equal(cfg.reasoning.confidenceThreshold, 0.6, "confidenceThreshold should be 0.6");
+  assert.ok(cfg.workspace && cfg.workspace.maxFiles > 0, "workspace.maxFiles should be configured");
 };

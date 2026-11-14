@@ -9,17 +9,19 @@ const ToolsRegistry = require("./registry/tools");
 const ValidatorsRegistry = require("./registry/validators");
 const CommandsRegistry = require("./registry/commands");
 
+const PLUGIN_BASE = "https://github.com/Marcu08/DevOS/blob/main/plugins/";
+
 const DEFAULT_MARKETPLACE = [
-  { name: "javascript", version: "1.0.0", description: "JavaScript project detection and tooling", url: "", capabilities: ["lint", "build"] },
-  { name: "python", version: "1.0.0", description: "Python project detection and tooling", url: "", capabilities: ["lint", "test"] },
-  { name: "react", version: "1.0.0", description: "React project detection and tooling", url: "", capabilities: ["lint", "build", "test"] },
-  { name: "docker", version: "1.0.0", description: "Docker project detection and tooling", url: "", capabilities: ["container"] },
-  { name: "security", version: "1.0.0", description: "Enhanced security scanning rules and tools", url: "", capabilities: ["security", "validation"] },
-  { name: "typescript", version: "1.0.0", description: "TypeScript project detection and tooling", url: "", capabilities: ["lint", "build"] },
-  { name: "rust", version: "1.0.0", description: "Rust project detection and tooling", url: "", capabilities: ["build", "test"] },
-  { name: "go", version: "1.0.0", description: "Go project detection and tooling", url: "", capabilities: ["build", "test", "lint"] },
-  { name: "ruby", version: "1.0.0", description: "Ruby project detection and tooling", url: "", capabilities: ["test", "lint"] },
-  { name: "php", version: "1.0.0", description: "PHP project detection and tooling", url: "", capabilities: ["test", "lint"] },
+  { name: "javascript", version: "1.0.0", description: "JavaScript project detection and tooling", url: `${PLUGIN_BASE}javascript.js`, capabilities: ["lint", "build"] },
+  { name: "python", version: "1.0.0", description: "Python project detection and tooling", url: `${PLUGIN_BASE}python.js`, capabilities: ["lint", "test"] },
+  { name: "react", version: "1.0.0", description: "React project detection and tooling", url: `${PLUGIN_BASE}react.js`, capabilities: ["lint", "build", "test"] },
+  { name: "docker", version: "1.0.0", description: "Docker project detection and tooling", url: `${PLUGIN_BASE}docker.js`, capabilities: ["container"] },
+  { name: "security", version: "1.0.0", description: "Enhanced security scanning rules and tools", url: "https://owasp.org/www-project-top-ten/", capabilities: ["security", "validation"] },
+  { name: "typescript", version: "1.0.0", description: "TypeScript project detection and tooling", url: "https://www.typescriptlang.org/", capabilities: ["lint", "build"] },
+  { name: "rust", version: "1.0.0", description: "Rust project detection and tooling", url: "https://www.rust-lang.org/", capabilities: ["build", "test"] },
+  { name: "go", version: "1.0.0", description: "Go project detection and tooling", url: "https://go.dev/", capabilities: ["build", "test", "lint"] },
+  { name: "ruby", version: "1.0.0", description: "Ruby project detection and tooling", url: "https://www.ruby-lang.org/", capabilities: ["test", "lint"] },
+  { name: "php", version: "1.0.0", description: "PHP project detection and tooling", url: "https://www.php.net/", capabilities: ["test", "lint"] },
 ];
 
 const VALID_PLUGIN_KEYS = new Set([
