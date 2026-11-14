@@ -12,6 +12,7 @@ module.exports = [
   { name: "mode", file: "mode.js", description: "Set or view execution mode (autonomous, assisted, safe)" },
   { name: "orchestrate", file: "orchestrate.js", description: "Run multi-agent orchestration pipeline" },
   { name: "performance", file: "performance.js", description: "Show performance metrics (execution time, cache, agent duration)" },
+  { name: "providers", file: "providers.js", description: "List standalone AI providers and availability" },
   { name: "plugins", file: "plugins.js", description: "List, install, and manage plugins" },
   { name: "pr", file: "pr.js", description: "GitHub PR operations (review, create)" },
   { name: "rollback", file: "rollback.js", description: "Roll back the workspace to the last clean state" },

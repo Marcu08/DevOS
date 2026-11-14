@@ -62,7 +62,7 @@ function measure(fn) {
 }
 
 function main() {
-  const context = require("../agent/context");
+  const context = require("../agent/context/index");
 
   // Cold: bypass the cache entirely. Warm: prime once, then measure a hit.
   const contextCold = measure(() => context.buildContext({ cache: false }));

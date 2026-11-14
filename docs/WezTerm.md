@@ -1,26 +1,29 @@
-# 🪟 WezTerm Setup
+# WezTerm Setup
 
 ## Purpose
 
-WezTerm is the main terminal interface for DevOS.
+WezTerm is the recommended terminal for DevOS.
 
 ---
 
-## Features enabled
+## Features
 
 - PowerShell 7 shell
-- custom workspace switching
-- split panes
-- fuzzy project navigation
-- AI agent shortcuts (future)
+- Custom workspace switching
+- Split panes
+- Fuzzy project navigation
+- AI agent shortcut
 
 ---
 
 ## Keybindings
 
-- CTRL + ALT + 1 → WMS workspace
-- CTRL + ALT + 2 → Portfolio workspace
-- CTRL + ALT + 3 → Team project
-- CTRL + SHIFT + A → Open AI agent
-- CTRL + SHIFT + D → horizontal split
-- CTRL + SHIFT + D → vertical split
+| Shortcut | Action |
+|----------|--------|
+| `CTRL + SHIFT + A` | Open the OpenCode agent in a new tab |
+| `CTRL + SHIFT + D` | Split the current pane horizontally |
+| `CTRL + ALT + 1` | WMS workspace |
+| `CTRL + ALT + 2` | Portfolio workspace |
+| `CTRL + ALT + 3` | Team project |
+
+The reference configuration is in `config/wezterm.lua`.

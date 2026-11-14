@@ -1,5 +1,5 @@
 const executor = require("../executor");
-const validator = require("../validator");
+const validator = require("../validator/plan");
 const state = require("../state");
 const log = require("../logger").get();
 

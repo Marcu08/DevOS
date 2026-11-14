@@ -39,7 +39,7 @@ Example output:
 
 ---
 
-### `node cli.js orchestrate` — Multi-agent orchestration (v1.4.0)
+### `node cli.js orchestrate` — Multi-agent orchestration
 
 ```powershell
 node cli.js orchestrate "refactor config module"
@@ -129,7 +129,7 @@ Resets all uncommitted changes via `git reset --hard`.
 
 ---
 
-### `node cli.js security` — Security scan (v1.4.0)
+### `node cli.js security` — Security scan
 
 ```powershell
 node cli.js security
@@ -162,7 +162,7 @@ Shows cross-store search, similarity scoring, and recommendation engine results.
 
 ---
 
-### `node cli.js explain` — Explain decisions (v1.4.0 enhanced)
+### `node cli.js explain` — Explain decisions
 
 ```powershell
 node cli.js explain                    # latest decision
@@ -209,7 +209,19 @@ runs from `logs/performance-metrics.json`.
 
 ---
 
-### `node cli.js plugins` — Plugin management (v1.4.0 enhanced)
+### `node cli.js providers` — Standalone AI providers
+
+```powershell
+node cli.js providers
+```
+
+Lists the standalone provider API (`openai`, `anthropic`, `deepseek`, `local`) and
+whether each one is configured. The default pipeline uses `agent/ai`
+(opencode → direct → fallback) instead.
+
+---
+
+### `node cli.js plugins` — Plugin management
 
 ```powershell
 node cli.js plugins                         # list installed
@@ -221,7 +233,7 @@ node cli.js plugins info <name>             # show plugin manifest
 
 ---
 
-### `node cli.js issue` — GitHub issue operations (v1.4.0)
+### `node cli.js issue` — GitHub issue operations
 
 ```powershell
 node cli.js issue analyze <number>    # analyze an issue
@@ -231,7 +243,7 @@ Requires `GITHUB_TOKEN` or `GH_TOKEN` environment variable.
 
 ---
 
-### `node cli.js pr` — GitHub PR operations (v1.4.0)
+### `node cli.js pr` — GitHub PR operations
 
 ```powershell
 node cli.js pr review <number>        # review a pull request
@@ -282,7 +294,7 @@ All pipeline logs are written as JSON to `logs/`:
 | `logs/review.json` | Self-review issues and approval |
 | `logs/execution.json` | Execution queue with step traces |
 | `logs/report.json` | Validator results (syntax, git, node, lint) |
-| `logs/explain.json` | Decision explanations (v1.4.0) |
+| `logs/explain.json` | Decision explanations |
 | `logs/plan.json` | Execution plan |
 | `logs/memory-history.json` | All past run records |
 | `logs/memory-mistakes.json` | Tracked failures and errors |
@@ -344,7 +356,7 @@ console.log(JSON.stringify(m.similarTo('syntax'), null, 2));
 "
 ```
 
-### Cross-store search (v1.4.0)
+### Cross-store search
 ```powershell
 node -e "
 const { search } = require('./agent/memory/index');
@@ -352,7 +364,7 @@ console.log(JSON.stringify(search('syntax error', { stores: ['mistakes','solutio
 "
 ```
 
-### Similarity scoring (v1.4.0)
+### Similarity scoring
 ```powershell
 node -e "
 const { similarity } = require('./agent/memory/index');
@@ -360,7 +372,7 @@ console.log(similarity('fix syntax error in parser', 'fix parser syntax bug'));
 "
 ```
 
-### Recommendations (v1.4.0)
+### Recommendations
 ```powershell
 node -e "
 const { recommend } = require('./agent/memory/index');
@@ -444,7 +456,7 @@ node -e "require('./agent/validator/node').run({})"
 
 ---
 
-## AI Provider Abstraction (v1.4.0)
+## AI Provider Abstraction
 
 ```powershell
 # Generate with preferred provider
@@ -460,7 +472,7 @@ Auth via environment variables: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK
 
 ---
 
-## Security Agent (v1.4.0)
+## Security Agent
 
 ```powershell
 # Run security scan
@@ -472,7 +484,7 @@ security.scan().then(results => console.log(JSON.stringify(results, null, 2)));
 
 ---
 
-## Explainability Engine (v1.4.0)
+## Explainability Engine
 
 ```powershell
 # View decision explanations

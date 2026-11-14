@@ -103,8 +103,7 @@ it. DevOS adds the missing engineering loop:
 - **Node.js 18+**
 - **Git**
 - Optional: **OpenCode CLI** for the `opencode` AI provider
-- Optional (Windows): **PowerShell 7** for the `.ps1` setup scripts and the
-  `opencode` provider
+- Optional (Windows): **PowerShell 7** for the `.ps1` setup scripts
 
 There are no runtime npm dependencies. A fresh clone runs with `node` alone;
 `npm install` is only needed for development tooling.
@@ -222,6 +221,7 @@ node cli.js <command> [args]
 | `mode [autonomous\|assisted\|safe]` | Set or view the execution mode |
 | `sandbox create\|status\|compare\|clean` | Manage the isolated sandbox environment |
 | `performance` | Show execution time, cache, and agent duration metrics |
+| `providers` | List standalone AI providers and availability |
 | `plugins [search\|install\|uninstall\|info]` | Manage plugins |
 | `issue analyze <number>` | Analyze a GitHub issue |
 | `pr review <number>` | Review a GitHub pull request |
@@ -472,7 +472,7 @@ Patch generation tries providers in order:
 
 | Order | Provider | Requirements |
 |-------|----------|--------------|
-| 1 | `opencode` | OpenCode CLI in `PATH` (Windows/PowerShell) |
+| 1 | `opencode` | OpenCode CLI in `PATH` (Windows `.cmd` shims handled) |
 | 2 | `direct` | `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` |
 | 3 | `fallback` | None — deterministic local patches, useful for smoke tests |
 
@@ -500,6 +500,7 @@ const result = await providers.generate("prompt", "openai");
 | `GITHUB_TOKEN` / `GH_TOKEN` | GitHub issue and PR operations |
 | `DEVOS_ROOT` | Override the project root (normally set by `cli.js`) |
 | `DEVOS_NO_CACHE` | Set to `1` to bypass the context cache |
+| `DEVOS_OPENCODE_BIN` | Override the OpenCode binary name/path |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Optional Supabase REST credentials |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase server-side key (never expose to a browser) |
 | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | Optional Supabase CLI/CI authentication |
@@ -602,9 +603,12 @@ gitignored) and is managed with `node cli.js mode`.
 npm test
 # or
 node tests/runner.js
+
+# coverage report (c8)
+npm run test:coverage
 ```
 
-The suite currently covers **20 test suites and 466 assertions**, all passing:
+The suite currently covers **23 test suites and 511 assertions**, all passing:
 
 - Patch engine (parser, applier, generator, round-trip)
 - State machine and execution flow
@@ -650,8 +654,8 @@ context build. CI runs the threshold check on Node 22. Context results are cache
 Two GitHub Actions workflows live in `.github/workflows/`:
 
 - **`ci.yml`** runs the test suite on Node 18, 20, and 22 across Ubuntu and Windows,
-  plus `npm run lint` and a runtime `npm audit` on Node 22, and a startup benchmark
-  threshold check on Node 22.
+  plus `npm run lint`, a runtime `npm audit`, a startup benchmark threshold check, and
+  a coverage report on Node 22.
 - **`supabase.yml`** validates the optional Supabase configuration on manual
   dispatch or changes under `supabase/`. It installs the Supabase CLI, verifies
   authentication, links the project, and pushes migrations when
@@ -666,10 +670,12 @@ the repository before enabling the Supabase workflow.
 ## Documentation
 
 - [`docs/Commands.md`](docs/Commands.md) — command reference and examples
-- [`docs/Getting Started.md`](docs/Getting%20Started.md) — setup walkthrough
-- [`docs/WorkFlow.md`](docs/WorkFlow.md) — workflow notes
+- [`docs/getting-started.md`](docs/getting-started.md) — setup walkthrough
+- [`docs/workflow.md`](docs/workflow.md) — workflow notes
 - [`docs/demo.md`](docs/demo.md) — demo walkthrough
 - [`docs/WezTerm.md`](docs/WezTerm.md) — terminal setup
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — development and pull request guide
+- [`SECURITY.md`](SECURITY.md) — security policy and secret handling
 - [`CHANGELOG.md`](CHANGELOG.md) — release history
 
 ---
@@ -680,7 +686,7 @@ the repository before enabling the Supabase workflow.
 |---------|-----|
 | `git` or `node` not found | Install the requirement and rerun `node cli.js doctor` |
 | Pipeline returns placeholder comments | No AI provider configured; set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` or install the OpenCode CLI |
-| `opencode` provider not detected | Install the OpenCode CLI and ensure it is in `PATH` (Windows/PowerShell) |
+| `opencode` provider not detected | Install the OpenCode CLI and ensure it is in `PATH`, or set `DEVOS_OPENCODE_BIN` |
 | `run` fails while patching | Ensure `workspace/` can be created; delete it and rerun, or run `node cli.js rollback` |
 | Dashboard port 3000 already in use | Stop the other process or change `PORT` in `dashboard/server.js` |
 | Workspace is dirty after a failed run | `node cli.js rollback`, or delete `workspace/` and rerun |
@@ -693,8 +699,11 @@ the repository before enabling the Supabase workflow.
 
 1. Fork the repository and create a feature branch.
 2. Keep changes scoped and add or update tests in `tests/`.
-3. Run `npm test` before opening a pull request.
+3. Run `npm test`, `npm run lint`, and `npm run bench -- --check`.
 4. Describe the behavior change, the root cause, and the verification you ran.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full guide and
+[`SECURITY.md`](SECURITY.md) for vulnerability reporting and secret handling.
 
 Bug reports and pull requests are welcome at
 <https://github.com/Marcu08/DevOS>.

@@ -11,6 +11,7 @@
     "setup": "node scripts/setup.js",
     "postinstall": "node scripts/setup.js --notice",
     "test": "node tests/runner.js",
+    "test:coverage": "c8 --reporter=text --reporter=lcov node tests/runner.js",
     "bench": "node scripts/bench.js",
     "doctor": "node cli.js doctor",
     "lint": "knip"
@@ -31,6 +32,7 @@
     "software-engineering"
   ],
   "devDependencies": {
+    "c8": "^10.1.3",
     "knip": "^6.26.0"
   }
 }

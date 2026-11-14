@@ -1,4 +1,4 @@
-const validator = require("../validator");
+const validator = require("../validator/plan");
 const patch = require("../patch");
 
 function run(step, context) {

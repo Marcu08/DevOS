@@ -1,5 +1,5 @@
 module.exports = function test(assert) {
-  const context = require("../agent/context");
+  const context = require("../agent/context/index");
   const cache = require("../agent/cache/index");
 
   // Context shape, built without cache so the test is deterministic.

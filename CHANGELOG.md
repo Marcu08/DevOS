@@ -13,9 +13,14 @@
 - Test runner options: `--filter`, `--timeout`, `--bail`, `--list`, `--json`, `--verbose`, `--quiet`, `--isolate`
 - Startup benchmark (`npm run bench`) with CI threshold checks
 - Context cache keyed by file `mtime`/size fingerprints (`DEVOS_NO_CACHE=1` bypasses it)
+- `providers` CLI command for the standalone AI provider API
+- Coverage via c8 (`npm run test:coverage`) and a CI coverage job
 
 ### Changed
 - CLI commands are loaded lazily; `help` no longer loads the pipeline, GitHub, or security engines
+- OpenCode provider is cross-platform (stdin prompt, no PowerShell dependency)
+- `agent/context` is imported directly from `agent/context/index`; the re-export wrapper was removed
+- Plan/PR/context validation lives in `agent/validator/plan`; the ambiguous `agent/validator.js` wrapper was removed
 - Context build reads each file once instead of three times
 - `doctor` runs its checks in parallel
 - Workspace Git uses a local identity and quiet output, avoiding CRLF warnings
@@ -33,13 +38,19 @@
 - `doctor` no longer fails on a fresh clone without `workspace/`
 - Marketplace tests no longer leave `test-plugin` behind
 - Cache filenames are filesystem-safe on Windows (no NTFS alternate data streams)
+- Removed the Node `DEP0190` warning from the OpenCode launcher
 
 ### Removed
+- `agent/context.js` (use `agent/context/index`)
+- `agent/validator.js` (moved to `agent/validator/plan.js`)
 - Unused `agent/patch-engine/matcher.js` and `agent/util/index.js`
 
 ### Docs
-- Added `mode`, `sandbox`, and `performance` to `docs/Commands.md`
-- Fixed the placeholder clone URL in `docs/Getting Started.md`
+- Added `mode`, `sandbox`, `performance`, `providers`, and `setup` to `docs/Commands.md`
+- Renamed `docs/Getting Started.md` to `docs/getting-started.md` and `docs/WorkFlow.md` to `docs/workflow.md`
+- Added `CONTRIBUTING.md` and `SECURITY.md`
+- Added a docs test that verifies relative links and command coverage
+- Fixed the placeholder clone URL in the getting-started guide
 
 ## v2.0.0 — PLUGIN FRAMEWORK (2026-07-14)
 

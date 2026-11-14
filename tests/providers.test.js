@@ -71,4 +71,9 @@ module.exports = async function test(assert) {
   // Provider manager analyze
   const mgrAnalysis = await providers.analyze(ctx, "test task");
   assert.ok(mgrAnalysis.provider, "analyze should return provider name");
+
+  // CLI command registration
+  const cli = require("../agent/cli/index");
+  assert.ok(cli.registry.providers !== undefined, "providers command should be registered");
+  assert.ok(typeof cli.registry.providers.handler === "function", "providers command should have a handler");
 };

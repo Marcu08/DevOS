@@ -52,7 +52,7 @@ User input
     └── ROLLBACK → revert
 ```
 
-## Multi-Agent Workflow (v1.4.0)
+## Multi-Agent Workflow
 
 ```
 User input
@@ -148,8 +148,8 @@ node cli.js orchestrate "Add dark mode support to this website"
 4. **Generates** unified diffs with context
 5. **Applies** patches with context matching (skips stale hunks)
 6. **Validates** the result (syntax, git, node, lint)
-7. **Reviews** with multi-agent pipeline (v1.4.0)
-8. **Scans** for security issues (v1.4.0)
+7. **Reviews** with multi-agent pipeline
+8. **Scans** for security issues
 9. **Decides** PASS, RETRY, or ROLLBACK
 
 ## Expected Result
