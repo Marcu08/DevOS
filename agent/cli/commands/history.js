@@ -1,7 +1,7 @@
 const out = require("../output");
-const history = require("../../memory/history");
 
 function handler() {
+  const history = require("../../memory/history");
   out.banner("Execution History");
 
   const stats = history.stats();

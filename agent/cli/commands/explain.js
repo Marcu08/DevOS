@@ -1,10 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 const out = require("../output");
-const DEVOS = require("../../config");
-const explain = require("../../explain/index");
 
 function handler(args) {
+  const DEVOS = require("../../config");
+  const explain = require("../../explain/index");
   const arg = args[0];
 
   if (arg && !arg.startsWith("-")) {

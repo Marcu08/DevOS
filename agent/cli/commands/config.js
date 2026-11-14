@@ -1,8 +1,8 @@
 const out = require("../output");
 const DEVOS = require("../../config");
-const approval = require("../../approval/index");
 
 function handler() {
+  const approval = require("../../approval/index");
   out.banner("DevOS Configuration");
   const cfg = DEVOS.config;
   const rows = [

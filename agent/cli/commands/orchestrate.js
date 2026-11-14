@@ -1,7 +1,7 @@
 const out = require("../output");
-const pipeline = require("../../pipeline/index");
 
 async function handler(args) {
+  const pipeline = require("../../pipeline/index");
   const task = args.join(" ") || "Review codebase";
   out.banner("Multi-Agent Orchestration");
   out.info(`Task: ${task}`);

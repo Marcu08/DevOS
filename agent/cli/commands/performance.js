@@ -1,7 +1,7 @@
 const out = require("../output");
-const perf = require("../../performance/index");
 
 function handler() {
+  const perf = require("../../performance/index");
   out.banner("Performance Metrics");
   const stats = perf.getStats();
 

@@ -13,6 +13,7 @@
 - Test runner options: `--filter`, `--timeout`, `--bail`, `--list`, `--json`, `--verbose`, `--quiet`, `--isolate`
 
 ### Changed
+- CLI commands are loaded lazily; `help` no longer loads the pipeline, GitHub, or security engines
 - README rewritten with accurate commands, installation, execution modes, architecture, providers, and troubleshooting
 - The Git-managed workspace is rebuilt from current project files on every run (up to 200 files)
 - Package identity is now `@marcu08/devos` with the `devos` binary

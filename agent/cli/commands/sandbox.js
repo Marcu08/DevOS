@@ -1,7 +1,7 @@
 const out = require("../output");
-const sandbox = require("../../sandbox/index");
 
 function handler(args) {
+  const sandbox = require("../../sandbox/index");
   const sub = args[0];
 
   if (sub === "create") {

@@ -1,7 +1,7 @@
 const out = require("../output");
-const memory = require("../../memory/index");
 
 function handler(args) {
+  const memory = require("../../memory/index");
   const sub = args[0];
 
   if (sub === "search") {

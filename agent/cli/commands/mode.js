@@ -1,7 +1,7 @@
 const out = require("../output");
-const approval = require("../../approval/index");
 
 function handler(args) {
+  const approval = require("../../approval/index");
   const sub = args[0];
 
   if (!sub || sub === "status") {

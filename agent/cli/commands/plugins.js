@@ -1,7 +1,7 @@
 const out = require("../output");
-const plugins = require("../../../plugins/index");
 
 function handler(args) {
+  const plugins = require("../../../plugins/index");
   const sub = args[0];
 
   if (sub === "install") {

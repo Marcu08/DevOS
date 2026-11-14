@@ -1,8 +1,8 @@
 const out = require("../output");
-const security = require("../../security/index");
-const context = require("../../pipeline/context");
 
 function handler() {
+  const security = require("../../security/index");
+  const context = require("../../pipeline/context");
   out.banner("Security Scan");
 
   const ctx = context.build();

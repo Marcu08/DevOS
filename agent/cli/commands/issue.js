@@ -1,7 +1,7 @@
 const out = require("../output");
-const github = require("../../github/index");
 
 async function handler(args) {
+  const github = require("../../github/index");
   const sub = args[0];
 
   if (sub === "analyze") {
