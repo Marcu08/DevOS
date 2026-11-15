@@ -14,42 +14,91 @@ const UNSAFE_SCRIPTS = [
   /(?:chmod\s+777|chmod\s+a\+w)/i,
 ];
 
+function finding(id, severity, file, line, label, remediation) {
+  return { id, severity, file, line, label, message: label, remediation };
+}
+
 function scanProject(rootDir) {
   const findings = [];
-
-  // Check package.json
   const pkgPath = path.join(rootDir, "package.json");
-  if (fs.existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-      const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
-      for (const [dep, ver] of Object.entries(allDeps)) {
-        for (const unsafe of UNSAFE_PACKAGES) {
-          if (dep === unsafe.name) {
-            findings.push({ file: "package.json", line: 0, severity: "high", label: `Unsafe dependency: ${dep} — ${unsafe.reason}`, snippet: `${dep}: "${ver}"` });
-          }
-        }
-        if (ver && (ver.includes(">") || ver.includes("*"))) {
-          findings.push({ file: "package.json", line: 0, severity: "low", label: `Loose version constraint: ${dep}`, snippet: `${dep}: "${ver}"` });
-        }
-      }
-    } catch (_) {}
+
+  let manifestStat;
+  try {
+    manifestStat = fs.lstatSync(pkgPath);
+  } catch (error) {
+    if (error.code === "ENOENT") return findings;
+    throw new Error("Dependency manifest could not be inspected");
   }
 
-  // Check scripts in package.json
-  if (fs.existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-      const allScripts = { ...pkg.scripts };
-      for (const [name, script] of Object.entries(allScripts)) {
-        if (!script) continue;
-        for (const pattern of UNSAFE_SCRIPTS) {
-          if (pattern.test(script)) {
-            findings.push({ file: "package.json", line: 0, severity: "high", label: `Unsafe script: ${name}`, snippet: script.slice(0, 100) });
-          }
-        }
+  if (manifestStat.isSymbolicLink()) {
+    throw new Error("Dependency manifest must not be a symbolic link");
+  }
+
+  if (!manifestStat.isFile()) {
+    throw new Error("Dependency manifest is not a regular file");
+  }
+
+  let raw;
+  try {
+    raw = fs.readFileSync(pkgPath, "utf-8");
+  } catch {
+    throw new Error("Dependency manifest could not be read or parsed");
+  }
+
+  let pkg;
+  try {
+    pkg = JSON.parse(raw);
+  } catch {
+    throw new Error("Dependency manifest could not be read or parsed");
+  }
+
+  if (!pkg || typeof pkg !== "object" || Array.isArray(pkg)) {
+    throw new Error("Dependency manifest has an invalid structure");
+  }
+
+  const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+  for (const [dep, ver] of Object.entries(allDeps)) {
+    for (const unsafe of UNSAFE_PACKAGES) {
+      if (dep === unsafe.name) {
+        findings.push(finding(
+          "dependencies.unsafe-package",
+          "high",
+          "package.json",
+          0,
+          "Unsafe dependency",
+          "Remove or isolate the unsafe dependency and use a safer alternative."
+        ));
       }
-    } catch (_) {}
+    }
+
+    if (ver && (ver.includes(">") || ver.includes("*"))) {
+      findings.push(finding(
+        "dependencies.loose-version",
+        "low",
+        "package.json",
+        0,
+        "Loose dependency version constraint",
+        "Pin dependencies or use a bounded semver range."
+      ));
+    }
+  }
+
+  const allScripts = { ...pkg.scripts };
+  for (const [name, script] of Object.entries(allScripts)) {
+    if (!script) continue;
+
+    for (const pattern of UNSAFE_SCRIPTS) {
+      if (pattern.test(script)) {
+        findings.push(finding(
+          "dependencies.unsafe-script",
+          "high",
+          "package.json",
+          0,
+          "Unsafe package script",
+          "Avoid destructive or network-piped shell commands in package scripts."
+        ));
+      }
+    }
   }
 
   return findings;
@@ -58,17 +107,26 @@ function scanProject(rootDir) {
 function scanReferences(context) {
   const findings = [];
   const depMap = context.dependencyMap || {};
+
   for (const [file, deps] of Object.entries(depMap)) {
     for (const dep of (deps || [])) {
-      if (dep && typeof dep === "string") {
-        for (const unsafe of UNSAFE_PACKAGES) {
-          if (dep.includes(unsafe.name)) {
-            findings.push({ file, line: 0, severity: "medium", label: `Unsafe reference: ${unsafe.reason}`, snippet: dep.slice(0, 100) });
-          }
+      if (!dep || typeof dep !== "string") continue;
+
+      for (const unsafe of UNSAFE_PACKAGES) {
+        if (dep.includes(unsafe.name)) {
+          findings.push(finding(
+            "dependencies.unsafe-reference",
+            "medium",
+            file,
+            0,
+            "Unsafe dependency reference",
+            "Verify the dependency is necessary and isolate privileged operations."
+          ));
         }
       }
     }
   }
+
   return findings;
 }
 

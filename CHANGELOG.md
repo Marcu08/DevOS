@@ -39,6 +39,21 @@ product-ready package with documentation and CI.
 - Execution mode moved from `config/mode.json` to `logs/mode.json` (runtime state, gitignored)
 
 ### Fixed
+- Security scanning now reads actual source files instead of trusting empty `context.topFiles[].content` metadata
+- Security findings include rule ids, remediation, relative paths, and lines; raw secret/source snippets are no longer included
+- Security scans fail explicitly (`ERROR` decision, non-zero exit) on missing workspaces, unreadable files, or file-limit truncation
+- Security source scanning skips binaries, symlinks, generated directories, and oversized files
+- Directory traversal revalidates directories before and after reading them and skips directory symlinks; a symlinked workspace root is rejected
+- Source reads are bounded to `maxFileSizeBytes + 1`, detect growth/change via descriptor identity, and close descriptors on every path
+- Individual source-scanner exceptions are recorded with file and category, do not abort remaining scanners/files, and mark the scan `ERROR`
+- Raw exception messages and stack traces are never stored in scan results; dependency and permission sub-scans fail independently
+- Finding labels and remediation come from trusted static metadata keyed by rule ID; package.json values and arbitrary scanner text are never copied into findings
+- Severity values are validated against the supported set, with invalid values normalized to `info`
+- Malformed or unreadable `package.json` files now fail the dependency scan explicitly (generic error, `ok: false`, `ERROR`); a missing manifest remains a no-op
+- Valid JSON manifest roots that are `null`, arrays, or primitives fail closed as invalid structures
+- Symlinked `package.json` manifests are rejected via `lstatSync` without reading or following the target
+- Environment files (`.env`, `.env.local`, and similar) are inspected by the secrets scanner; placeholder-only templates such as `.env.example` do not produce secret findings
+- Nested configured workspaces are excluded by relative path without excluding sibling source directories or the whole project when the workspace equals the scan root
 - Pipeline prepares the workspace before applying patches
 - Dashboard version now comes from `version.json`
 - Dashboard reads the sandbox status from the correct path

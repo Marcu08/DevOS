@@ -142,6 +142,10 @@ Scans the project with 5 modules:
 - Permissions (sensitive files, .gitignore compliance)
 - Vulnerabilities (common mistakes, debug logging, empty catches)
 
+The scanner reads source files directly, skips binaries/symlinks/generated
+directories/oversized files, and reports a non-zero exit plus `ERROR` decision when
+the scan cannot complete.
+
 ---
 
 ### `node cli.js history` — Show execution history

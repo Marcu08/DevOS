@@ -35,6 +35,11 @@
     "confidenceThreshold": 0.6,
     "maxHealingRetries": 3
   },
+  "security": {
+    "maxFiles": 2000,
+    "maxFileSizeBytes": 1048576,
+    "exclude": []
+  },
   "logging": {
     "directory": "logs",
     "state": true,
