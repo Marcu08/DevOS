@@ -445,7 +445,36 @@ DevOS ships an autonomous security reviewer with five scanning modules:
 node cli.js security
 ```
 
-Security findings influence the pipeline decision (`PASS` / `RETRY` / `ROLLBACK`).
+The scanner reads the actual contents of source files under the project root. It does
+not trust `context.topFiles[].content` metadata, which only contains file summaries.
+It skips binaries, symlinks, generated directories, and files above the configured
+size limit, and reports unreadable files instead of treating them as empty.
+Environment files such as `.env` and `.env.local` are included in secret scanning;
+placeholder-only templates such as `.env.example` do not generate secret findings.
+Directory symlinks are revalidated before traversal, and a symlinked workspace root
+is rejected. Source reads are bounded to the configured limit plus one byte, so a
+file that grows during a read cannot force an unbounded allocation.
+
+Portable Node cannot fully eliminate a parent-directory swap between validation and
+child path resolution; the scanner narrows that window, skips symlinks, and fails
+closed when identity changes are observed.
+
+If the scan cannot complete (missing workspace, unreadable file, file limit, or a
+scanner exception), the command exits non-zero and the decision is `ERROR`; an empty
+findings list alone is never reported as a successful scan. A failure in one source
+scanner is recorded with its file and category while the remaining scanners and
+files continue to run. Dependency and permission sub-scans are isolated from each
+other, and scan errors never include raw exception text or stack traces.
+
+Finding labels and remediation are taken from trusted static metadata by rule ID;
+dependency names, script names, scanner-provided messages, and source values are
+never copied into findings. A present but unreadable, malformed, or symlinked
+`package.json`, or valid JSON that is not an object root, makes the scan incomplete
+(`ERROR`); a missing manifest remains a no-op. Findings include a rule id, severity, relative
+file path, line number when available, and a remediation.
+
+Security findings influence the pipeline decision (`PASS` / `RETRY` / `ROLLBACK` /
+`ERROR`). Raw secret values and source snippets are not included in findings or logs.
 
 Additional safeguards:
 
@@ -454,6 +483,8 @@ Additional safeguards:
 - The patch engine validates context lines before applying a diff, so stale hunks are
   skipped instead of corrupting files.
 - `workspace/` isolates pipeline changes from your main working tree.
+- Security source scanning excludes binaries, symlinks, generated directories, and
+  oversized files; it reports incomplete scans explicitly.
 - Execution modes add approval gates for dangerous operations.
 
 > **Warning:** DevOS executes generated code and validation commands. Use it on a
@@ -595,6 +626,9 @@ Main configuration: [`config/devos.json`](config/devos.json).
 | `reasoning.confidenceThreshold` | Minimum confidence to execute (default `0.6`) |
 | `reasoning.maxHealingRetries` | Retry budget (default `3`) |
 | `workspace.maxFiles` | Maximum files copied into the Git-managed workspace (default `200`) |
+| `security.maxFiles` | Maximum source files scanned before the scan is marked incomplete (default `2000`) |
+| `security.maxFileSizeBytes` | Maximum file size scanned for source findings (default `1048576`) |
+| `security.exclude` | Extra directory/file names or relative paths excluded from source scanning |
 | `logging.directory` | Log directory |
 | `logging.state`, `.context`, `.execution`, `.report`, `.reasoning` | Enabled logs |
 

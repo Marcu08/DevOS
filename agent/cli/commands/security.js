@@ -9,7 +9,17 @@ function handler() {
   const result = security.scanAll(ctx);
   const decision = security.getDecision(result);
 
+  if (!result.ok) {
+    out.error(result.error);
+    for (const error of result.errors.slice(0, 5)) {
+      out.warn(`${error.file || "workspace"}: ${error.error}`);
+    }
+    process.exitCode = 1;
+  }
+
   out.status(result.summary.critical === 0 ? "ok" : "fail", result.summary.critical === 0 ? "ok" : "fail", `Findings: ${result.summary.total}`);
+  out.status("info", "ok", `Files scanned: ${result.filesScanned}`);
+  out.status("info", "ok", `Files skipped: ${result.filesSkipped.length}`);
   out.status("info", "ok", `Critical: ${result.summary.critical}`);
   out.status("info", "ok", `High: ${result.summary.high}`);
   out.status("info", "ok", `Medium: ${result.summary.medium}`);
